@@ -1,0 +1,7 @@
+dbt-bigquery
+google-cloud-bigquery
+pandas
+pyarrow
+sqlalchemy
+psycopg2-binary
+python-dotenv
