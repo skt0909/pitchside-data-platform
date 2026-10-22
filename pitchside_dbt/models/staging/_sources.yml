@@ -1,0 +1,12 @@
+version: 2
+
+sources:
+  - name: raw
+    description: Football tables copied from the local Pitchside database by ingestion/export_and_load.py
+    schema: raw
+    tables:
+      - name: teams
+      - name: players
+      - name: fixtures
+      - name: player_gw_stats
+      - name: ml_predictions

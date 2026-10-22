@@ -1,0 +1,84 @@
+version: 2
+
+models:
+  - name: stg_teams
+    description: One row per team per season.
+    columns:
+      - name: team_id
+        description: Primary key of the team row.
+        data_tests:
+          - unique
+          - not_null
+
+  - name: stg_players
+    description: One row per player per season.
+    columns:
+      - name: player_id
+        description: Primary key of the player row.
+        data_tests:
+          - unique
+          - not_null
+      - name: player_position
+        description: GK, DEF, MID or FWD.
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ['GK', 'DEF', 'MID', 'FWD']
+      - name: team_id
+        description: The player's team.
+        data_tests:
+          - relationships:
+              to: ref('stg_teams')
+              field: team_id
+
+  - name: stg_fixtures
+    description: One row per fixture.
+    columns:
+      - name: fixture_id
+        description: Primary key of the fixture.
+        data_tests:
+          - unique
+          - not_null
+      - name: home_team_id
+        data_tests:
+          - relationships:
+              to: ref('stg_teams')
+              field: team_id
+      - name: away_team_id
+        data_tests:
+          - relationships:
+              to: ref('stg_teams')
+              field: team_id
+
+  - name: stg_player_gw_stats
+    description: One row per player per fixture, with match statistics and points.
+    columns:
+      - name: player_gw_stat_id
+        description: Primary key of the stats row.
+        data_tests:
+          - unique
+          - not_null
+      - name: player_id
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('stg_players')
+              field: player_id
+      - name: total_points
+        data_tests:
+          - not_null
+
+  - name: stg_ml_predictions
+    description: Model predictions, one row per player per gameweek per model version.
+    columns:
+      - name: prediction_id
+        description: Primary key of the prediction row.
+        data_tests:
+          - unique
+          - not_null
+      - name: player_id
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('stg_players')
+              field: player_id

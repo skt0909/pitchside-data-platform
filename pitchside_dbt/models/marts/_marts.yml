@@ -1,0 +1,65 @@
+version: 2
+
+models:
+  - name: dim_teams
+    description: Teams, one row per team per season.
+    columns:
+      - name: team_id
+        description: Primary key.
+        data_tests:
+          - unique
+          - not_null
+
+  - name: dim_players
+    description: Players, one row per player per season, with the team name attached.
+    columns:
+      - name: player_id
+        description: Primary key.
+        data_tests:
+          - unique
+          - not_null
+
+  - name: fct_fixtures
+    description: Fixtures with team names and the match result.
+    columns:
+      - name: fixture_id
+        description: Primary key.
+        data_tests:
+          - unique
+          - not_null
+      - name: result
+        description: home_win, away_win or draw. Empty until the fixture is finished.
+        data_tests:
+          - accepted_values:
+              values: ['home_win', 'away_win', 'draw']
+
+  - name: fct_player_gameweek
+    description: One row per player per fixture with match statistics, opponent and points.
+    columns:
+      - name: player_gw_stat_id
+        description: Primary key.
+        data_tests:
+          - unique
+          - not_null
+
+  - name: player_form
+    description: Points per player per gameweek with a rolling three-gameweek average.
+    columns:
+      - name: player_id
+        data_tests:
+          - not_null
+      - name: points_rolling_3
+        description: Average points over this and the previous two gameweeks.
+
+  - name: fct_prediction_vs_actual
+    description: Model predictions compared with the points players actually scored.
+    columns:
+      - name: prediction_id
+        description: Primary key.
+        data_tests:
+          - unique
+          - not_null
+      - name: absolute_error
+        description: Absolute difference between predicted and actual points.
+        data_tests:
+          - not_null
