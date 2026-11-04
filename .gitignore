@@ -219,3 +219,16 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 exports/
+
+# Local logs and data files
+logs/
+*.parquet
+
+# Secrets and credentials
+*-key.json
+service-account*.json
+*credentials*.json
+*.pem
+*.p12
+.pitchside/
+pg_extract_pw

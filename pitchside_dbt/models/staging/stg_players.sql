@@ -6,12 +6,15 @@ select
     season,
     fpl_name as player_name,
     web_name,
+    fbref_name,
     position as player_position,
+    position_encoded,
     team_id,
     cost_start / 10.0 as start_price_millions,
-    status as availability_status
-from {{ source('raw', 'players') }}
-
--- Keep real seasons only (for example 2025-26). Simulation and test seasons
--- such as SIMSMOKE and 9998-00 are excluded here and stay untouched in raw.
-where regexp_contains(season, r'^20[0-9]{2}-[0-9]{2}$')
+    now_cost / 10.0 as current_price_millions,
+    status as availability_status,
+    created_at,
+    updated_at,
+    _batch_id,
+    _loaded_at
+from {{ source('bronze', 'ml_players') }}

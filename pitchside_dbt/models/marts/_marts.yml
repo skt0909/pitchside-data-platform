@@ -3,21 +3,89 @@ version: 2
 models:
   - name: dim_teams
     description: Teams, one row per team per season.
+    config:
+      contract:
+        enforced: true
     columns:
       - name: team_id
+        data_type: int64
         description: Primary key.
         data_tests:
           - unique
           - not_null
+      - name: fpl_team_id
+        data_type: int64
+        description: The team's id in the football API.
+      - name: season
+        data_type: string
+        description: Season label such as 2026-27.
+      - name: team_name
+        data_type: string
+        description: Full team name.
+      - name: team_short_name
+        data_type: string
+        description: Three-letter team code.
+      - name: strength_overall_home
+        data_type: int64
+        description: Overall strength rating when playing at home.
+      - name: strength_overall_away
+        data_type: int64
+        description: Overall strength rating when playing away.
+      - name: strength_attack_home
+        data_type: int64
+        description: Attack strength rating at home.
+      - name: strength_attack_away
+        data_type: int64
+        description: Attack strength rating away.
+      - name: strength_defence_home
+        data_type: int64
+        description: Defence strength rating at home.
+      - name: strength_defence_away
+        data_type: int64
+        description: Defence strength rating away.
 
   - name: dim_players
     description: Players, one row per player per season, with the team name attached.
+    config:
+      contract:
+        enforced: true
     columns:
       - name: player_id
+        data_type: int64
         description: Primary key.
         data_tests:
           - unique
           - not_null
+      - name: fpl_player_id
+        data_type: int64
+        description: The player's id in the football API.
+      - name: season
+        data_type: string
+        description: Season label such as 2026-27.
+      - name: player_name
+        data_type: string
+        description: Full player name.
+      - name: web_name
+        data_type: string
+        description: Short display name.
+      - name: player_position
+        data_type: string
+        description: GK, DEF, MID or FWD.
+      - name: team_id
+        data_type: int64
+        description: The player's team.
+      - name: team_name
+        data_type: string
+        description: Full name of the player's team.
+      - name: team_short_name
+        data_type: string
+        description: Three-letter code of the player's team.
+      - name: start_price_millions
+        data_type: float64
+        description: Price at the start of the season, in millions. Changing this to NUMERIC would be a breaking change.
+      - name: availability_status
+        data_type: string
+        description: Availability flag from the football API (for example available or injured).
 
   - name: fct_fixtures
     description: Fixtures with team names and the match result.
@@ -34,13 +102,98 @@ models:
               values: ['home_win', 'away_win', 'draw']
 
   - name: fct_player_gameweek
-    description: One row per player per fixture with match statistics, opponent and points.
+    description: >
+      One row per player per fixture with match statistics, opponent and points.
+      gameweek_key (season and gameweek, for example 2026-27-5) matches dim_gameweeks.
+      kickoff_time is the fixture's kick-off and can be empty for postponed fixtures.
+    config:
+      contract:
+        enforced: true
     columns:
       - name: player_gw_stat_id
+        data_type: int64
         description: Primary key.
         data_tests:
           - unique
           - not_null
+      - name: player_id
+        data_type: int64
+        description: The player.
+      - name: player_name
+        data_type: string
+        description: Full player name.
+      - name: player_position
+        data_type: string
+        description: GK, DEF, MID or FWD.
+      - name: team_id
+        data_type: int64
+        description: The player's team.
+      - name: team_name
+        data_type: string
+        description: Full name of the player's team.
+      - name: season
+        data_type: string
+        description: Season label such as 2026-27.
+      - name: gameweek
+        data_type: int64
+        description: Gameweek number.
+      - name: gameweek_key
+        data_type: string
+        description: Season and gameweek joined together, for example 2026-27-5. Matches dim_gameweeks.
+      - name: fixture_id
+        data_type: int64
+        description: The fixture the row belongs to.
+      - name: kickoff_time
+        data_type: timestamp
+        description: Kick-off of the fixture. Can be empty for postponed fixtures.
+      - name: was_home
+        data_type: bool
+        description: True if the player's team played at home.
+      - name: opponent
+        data_type: string
+        description: The team played against.
+      - name: minutes
+        data_type: int64
+        description: Minutes the player was on the pitch.
+      - name: goals_scored
+        data_type: int64
+        description: Goals scored.
+      - name: assists
+        data_type: int64
+        description: Assists.
+      - name: clean_sheets
+        data_type: int64
+        description: 1 if the player's team conceded no goals while they played.
+      - name: goals_conceded
+        data_type: int64
+        description: Goals conceded while the player was on the pitch.
+      - name: saves
+        data_type: int64
+        description: Saves made (goalkeepers).
+      - name: bonus
+        data_type: int64
+        description: Bonus points awarded (0 to 3).
+      - name: bps
+        data_type: int64
+        description: Bonus points system score used to decide the bonus.
+      - name: yellow_cards
+        data_type: int64
+        description: Yellow cards.
+      - name: red_cards
+        data_type: int64
+        description: Red cards.
+      - name: expected_goals
+        data_type: numeric(38,9)
+        description: Expected goals (xG). Empty if missing, never replaced by 0.
+      - name: expected_assists
+        data_type: numeric(38,9)
+        description: Expected assists (xA). Empty if missing, never replaced by 0.
+      - name: price_millions
+        data_type: float64
+        description: Player price at the time, in millions. Changing this to NUMERIC would be a breaking change.
+      - name: total_points
+        data_type: int64
+        description: Fantasy points the player scored.
 
   - name: player_form
     description: Points per player per gameweek with a rolling three-gameweek average.
@@ -63,3 +216,62 @@ models:
         description: Absolute difference between predicted and actual points.
         data_tests:
           - not_null
+
+  - name: dim_gameweeks
+    description: >
+      One row per season and gameweek. The list of gameweeks comes from the fixtures, so
+      gameweeks that have not been scored yet are included. Start and end are the earliest
+      and latest kick-off in that gameweek. scored_at and is_scored come from Pitchside's own
+      scoring (the source table is public.gameweeks). They show when the app's scoring ran for the
+      gameweek, which is not necessarily the same as the real matches being finished. To be
+      confirmed with the app code. Use is_finished for whether the matches are over.
+    config:
+      contract:
+        enforced: true
+    columns:
+      - name: gameweek_key
+        data_type: string
+        description: Season and gameweek joined together, for example 2026-27-5. Matches stg_gameweeks.
+        data_tests:
+          - unique
+          - not_null
+      - name: season
+        data_type: string
+        description: Season label such as 2026-27.
+        data_tests:
+          - not_null
+      - name: gameweek
+        data_type: int64
+        description: Gameweek number.
+        data_tests:
+          - not_null
+      - name: rules_version
+        data_type: int64
+        description: Version of the scoring rules that applied to this gameweek. Empty if no rules version has started yet.
+      - name: gameweek_start
+        data_type: timestamp
+        description: Kick-off time of the first fixture in the gameweek.
+      - name: gameweek_end
+        data_type: timestamp
+        description: Kick-off time of the last fixture in the gameweek.
+      - name: fixture_count
+        data_type: int64
+        description: Number of fixtures in the gameweek.
+      - name: is_finished
+        data_type: bool
+        description: True when the gameweek has at least one fixture and every fixture is finished. A fixture with an unknown finished flag counts as not finished.
+      - name: scored_at
+        data_type: timestamp
+        description: When Pitchside's own scoring ran for this gameweek (source table public.gameweeks). Not necessarily when the real matches finished. To be confirmed with the app code. Empty if scoring has not run.
+      - name: is_scored
+        data_type: bool
+        description: True if scored_at is not empty, meaning Pitchside's scoring has run for this gameweek. Not necessarily the same as the matches being finished. To be confirmed with the app code.
+
+  - name: metricflow_time_spine
+    description: One row per calendar day (2025-01-01 to 2030-12-31). Plumbing for the semantic layer, not a data product table.
+    time_spine:
+      standard_granularity_column: date_day
+    columns:
+      - name: date_day
+        description: The calendar day.
+        granularity: day

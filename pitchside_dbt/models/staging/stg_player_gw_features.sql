@@ -1,0 +1,30 @@
+-- One row per player per gameweek: rolling form features used by the model.
+-- Empty today (0 rows). Rolling averages are text in Bronze, so they are cast here.
+select
+    id as feature_id,
+    player_id,
+    season,
+    gameweek,
+    safe_cast(pts_rolling_3gw as numeric) as pts_rolling_3gw,
+    safe_cast(pts_rolling_5gw as numeric) as pts_rolling_5gw,
+    safe_cast(minutes_rolling_3gw as numeric) as minutes_rolling_3gw,
+    safe_cast(goals_rolling_5gw as numeric) as goals_rolling_5gw,
+    safe_cast(assists_rolling_5gw as numeric) as assists_rolling_5gw,
+    safe_cast(clean_sheets_rolling_5gw as numeric) as clean_sheets_rolling_5gw,
+    safe_cast(saves_rolling_3gw as numeric) as saves_rolling_3gw,
+    safe_cast(bonus_rolling_3gw as numeric) as bonus_rolling_3gw,
+    safe_cast(bps_rolling_3gw as numeric) as bps_rolling_3gw,
+    safe_cast(ict_rolling_3gw as numeric) as ict_rolling_3gw,
+    safe_cast(xg_rolling_5gw as numeric) as xg_rolling_5gw,
+    safe_cast(xa_rolling_5gw as numeric) as xa_rolling_5gw,
+    safe_cast(xgi_rolling_5gw as numeric) as xgi_rolling_5gw,
+    position_encoded,
+    was_home,
+    safe_cast(price_current as numeric) as price_current,
+    ownership_count,
+    next_gw_points,
+    features_computed_at,
+    label_filled_at,
+    _batch_id,
+    _loaded_at
+from {{ source('bronze', 'ml_player_gw_features') }}

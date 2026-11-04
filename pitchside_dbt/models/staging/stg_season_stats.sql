@@ -1,0 +1,25 @@
+-- One row per player per season and data source. Empty today (0 rows).
+select
+    id as season_stat_id,
+    player_id,
+    season,
+    data_source,
+    total_minutes,
+    matches_played,
+    fpl_total_points,
+    goals,
+    assists,
+    shots,
+    shots_on_target,
+    safe_cast(xg_season as numeric) as xg_season,
+    safe_cast(xa_season as numeric) as xa_season,
+    saves,
+    clean_sheets,
+    safe_cast(gk_save_pct as numeric) as gk_save_pct,
+    starts,
+    mins_per_match,
+    safe_cast(on_off_diff as numeric) as on_off_diff,
+    created_at,
+    _batch_id,
+    _loaded_at
+from {{ source('bronze', 'ml_season_stats') }}

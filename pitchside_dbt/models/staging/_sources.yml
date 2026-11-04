@@ -1,12 +1,50 @@
 version: 2
 
 sources:
-  - name: raw
-    description: Football tables copied from the local Pitchside database by ingestion/export_and_load.py
-    schema: raw
+  - name: bronze
+    description: >
+      Faithful daily copy of the Pitchside Postgres tables, loaded by bronze_loader.py.
+      Nothing is renamed or cleaned here. Numeric columns are STRING. Every table has
+      _batch_id, _loaded_at and _source_table. Freshness is measured on _loaded_at,
+      which is when Bronze was loaded, not when the source data last changed.
+    database: project-22f7491c-9bfd-4735-81c
+    schema: bronze
+    config:
+      loaded_at_field: _loaded_at
+      freshness:
+        warn_after: {count: 36, period: hour}
+        error_after: {count: 72, period: hour}
     tables:
-      - name: teams
-      - name: players
-      - name: fixtures
-      - name: player_gw_stats
-      - name: ml_predictions
+      - name: ml_players
+        description: One row per player per season (670 rows).
+      - name: ml_teams
+        description: One row per team per season (20 rows).
+      - name: ml_fixtures
+        description: One row per fixture (380 rows).
+      - name: ml_player_gw_stats
+        description: >
+          One row per player per fixture with match stats and points (5882 rows).
+          Numeric stats are STRING. 659 rows have NULL influence because the live
+          gameweek is not populated yet.
+      - name: ml_season_stats
+        description: Season-level player stats. Empty for now (0 rows).
+        config:
+          freshness: null
+      - name: ml_player_gw_features
+        description: Rolling-form features per player per gameweek. Empty for now (0 rows).
+        config:
+          freshness: null
+      - name: ml_ml_predictions
+        description: >
+          Model predictions (1318 rows). FROZEN: only gameweeks 5 and 6 from
+          xgboost_v1, last written 2026-09-22. It is exempt from the freshness error.
+        config:
+          freshness:
+            warn_after: {count: 36, period: hour}
+            error_after: null
+      - name: ml_fixture_poll_schedule
+        description: When the app polls each fixture for half-time and full-time results (344 rows).
+      - name: public_gameweeks
+        description: One row per gameweek that has been scored (4 rows).
+      - name: public_ruleset_epochs
+        description: Which scoring rules version applies from which gameweek (1 row).

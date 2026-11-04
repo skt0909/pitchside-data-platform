@@ -1,0 +1,9 @@
+dbt-core==1.12.6
+dbt-bigquery==1.12.1
+dbt-metricflow==0.15.0
+google-cloud-bigquery
+pandas
+pyarrow
+sqlalchemy
+psycopg2-binary
+python-dotenv

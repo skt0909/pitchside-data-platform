@@ -1,0 +1,163 @@
+semantic_models:
+  - name: player_gameweek
+    description: One row per player per fixture with match statistics and fantasy points.
+    model: ref('fct_player_gameweek')
+    defaults:
+      agg_time_dimension: kickoff_date
+    entities:
+      - name: player_gw_stat
+        type: primary
+        expr: player_gw_stat_id
+      - name: player
+        type: foreign
+        expr: player_id
+      - name: team
+        type: foreign
+        expr: team_id
+      - name: fixture
+        type: foreign
+        expr: fixture_id
+      - name: gameweek
+        type: foreign
+        expr: gameweek_key
+    dimensions:
+      - name: kickoff_date
+        type: time
+        expr: kickoff_time
+        type_params:
+          time_granularity: day
+      - name: season
+        type: categorical
+      - name: gameweek_number
+        type: categorical
+        expr: gameweek
+      - name: player_name
+        type: categorical
+      - name: player_position
+        type: categorical
+      - name: team_name
+        type: categorical
+      - name: opponent
+        type: categorical
+      - name: was_home
+        type: categorical
+    measures:
+      - name: points_sum
+        description: Sum of fantasy points.
+        agg: sum
+        expr: total_points
+      - name: minutes_sum
+        description: Sum of minutes played.
+        agg: sum
+        expr: minutes
+      - name: goal_involvements_sum
+        description: Sum of goals plus assists.
+        agg: sum
+        expr: goals_scored + assists
+      - name: player_gameweeks_count
+        description: Number of distinct player and gameweek combinations.
+        agg: count_distinct
+        expr: concat(cast(player_id as string), '-', gameweek_key)
+
+  - name: players
+    description: One row per player per season.
+    model: ref('dim_players')
+    entities:
+      - name: player
+        type: primary
+        expr: player_id
+      - name: team
+        type: foreign
+        expr: team_id
+    dimensions:
+      - name: player_name
+        type: categorical
+      - name: web_name
+        type: categorical
+      - name: player_position
+        type: categorical
+      - name: season
+        type: categorical
+      - name: availability_status
+        type: categorical
+
+  - name: teams
+    description: One row per team per season.
+    model: ref('dim_teams')
+    entities:
+      - name: team
+        type: primary
+        expr: team_id
+    dimensions:
+      - name: team_name
+        type: categorical
+      - name: team_short_name
+        type: categorical
+      - name: season
+        type: categorical
+
+  - name: gameweeks
+    description: One row per season and gameweek.
+    model: ref('dim_gameweeks')
+    entities:
+      - name: gameweek
+        type: primary
+        expr: gameweek_key
+    dimensions:
+      - name: season
+        type: categorical
+      - name: gameweek_number
+        type: categorical
+        expr: gameweek
+      - name: rules_version
+        type: categorical
+      - name: is_scored
+        type: categorical
+      - name: is_finished
+        type: categorical
+      - name: gameweek_start
+        type: time
+        type_params:
+          time_granularity: day
+
+metrics:
+  - name: total_fantasy_points
+    label: Total fantasy points
+    description: Sum of fantasy points scored.
+    type: simple
+    type_params:
+      measure: points_sum
+  - name: total_minutes
+    label: Total minutes
+    description: Sum of minutes played.
+    type: simple
+    type_params:
+      measure: minutes_sum
+  - name: goal_involvements
+    label: Goal involvements
+    description: Goals plus assists.
+    type: simple
+    type_params:
+      measure: goal_involvements_sum
+  - name: player_gameweeks
+    label: Player gameweeks
+    description: Number of distinct player and gameweek combinations (a double gameweek counts once).
+    type: simple
+    type_params:
+      measure: player_gameweeks_count
+  - name: average_points_per_player_gameweek
+    label: Average points per player gameweek
+    description: Total fantasy points divided by player gameweeks.
+    type: ratio
+    type_params:
+      numerator: total_fantasy_points
+      denominator: player_gameweeks
+  - name: points_per_90
+    label: Points per 90 minutes
+    description: Fantasy points per 90 minutes played. Empty when no minutes were played.
+    type: derived
+    type_params:
+      expr: case when total_minutes = 0 then null else total_fantasy_points * 90.0 / total_minutes end
+      metrics:
+        - name: total_fantasy_points
+        - name: total_minutes

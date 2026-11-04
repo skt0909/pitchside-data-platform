@@ -17,7 +17,9 @@ select
     p.team_name,
     s.season,
     s.gameweek,
+    concat(s.season, '-', cast(s.gameweek as string)) as gameweek_key,
     s.fixture_id,
+    fx.kickoff_time,
     s.was_home,
     case
         when s.was_home is null then null

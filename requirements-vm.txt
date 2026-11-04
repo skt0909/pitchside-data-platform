@@ -1,0 +1,5 @@
+psycopg[binary]
+pyarrow
+google-auth
+google-cloud-storage
+google-cloud-bigquery

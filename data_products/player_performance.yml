@@ -1,0 +1,229 @@
+# Data product contract: Player Performance
+# Documentation and a promise to consumers. dbt does not read this file (it lives
+# outside models/). Keep it in step with pitchside_dbt/models/marts.
+# Facts that change over time carry a date ("as of 2026-11-03").
+
+name: player_performance
+title: Player Performance
+version: 1.0.0
+owner: Football Analytics
+domain: Football analytics
+status: draft   # metrics verified overall and by gameweek only, see verification_scope
+
+description: >
+  Match-by-match performance of fantasy football players: minutes, goals,
+  assists, fantasy points and price, with the team, opponent, gameweek and
+  scoring-rules version. Built from Pitchside's own database, not from a public feed.
+
+grain: One row per player per fixture (fct_player_gameweek, primary key player_gw_stat_id).
+grain_notes: >
+  A player with a double gameweek has two rows in that gameweek. Metrics that say
+  "per player gameweek" count a player once per gameweek.
+
+tables:
+  - name: fct_player_gameweek
+    description: One row per player per fixture with match statistics, opponent and points.
+  - name: dim_players
+    description: One row per player per season, with the team name attached.
+  - name: dim_teams
+    description: One row per team per season.
+  - name: dim_gameweeks
+    description: One row per season and gameweek, with start, end, fixture count, rules version and Pitchside scoring status.
+
+dimensions:   # defined in pitchside_dbt/models/marts/_semantic.yml
+  - name: kickoff_date
+    description: Date of the fixture. Can be empty for postponed fixtures.
+  - name: season
+    description: Season label such as 2026-27.
+  - name: gameweek_number
+    description: Gameweek number within the season.
+  - name: player_name
+    description: Player's full name.
+  - name: player_position
+    description: GK, DEF, MID or FWD.
+  - name: team_name
+    description: The player's team.
+  - name: opponent
+    description: The team played against.
+  - name: was_home
+    description: True if the player's team played at home.
+  - name: rules_version
+    description: Version of the scoring rules that applied (from dim_gameweeks).
+  - name: is_finished
+    description: True when every fixture in the gameweek is finished (from dim_gameweeks).
+  - name: is_scored
+    description: True when Pitchside's own scoring has run for the gameweek (from dim_gameweeks). See known_limitations.
+
+metrics:   # names exactly as defined in pitchside_dbt/models/marts/_semantic.yml
+  - name: total_fantasy_points
+    description: Sum of fantasy points scored.
+    verification: verified
+    verification_note: >
+      Whole-season value 8218. Checked on 2026-11-04 by comparing mf query output with independent SQL on
+      gold.fct_player_gameweek, for the whole season and by gameweek (9 rows): exact match. An earlier direct SQL check of the totals was done on 2026-11-03.
+  - name: total_minutes
+    description: Sum of minutes played.
+    verification: verified
+    verification_note: >
+      Whole-season value 176940. Checked on 2026-11-04 by comparing mf query output with independent SQL on
+      gold.fct_player_gameweek, for the whole season and by gameweek (9 rows): exact match.
+  - name: goal_involvements
+    description: Goals plus assists.
+    verification: verified
+    verification_note: >
+      Whole-season value 450. Checked on 2026-11-04 by comparing mf query output with independent SQL on
+      gold.fct_player_gameweek, for the whole season and by gameweek (9 rows): exact match.
+  - name: player_gameweeks
+    description: Number of distinct player and gameweek combinations (a double gameweek counts once). Helper metric for the average.
+    verification: verified
+    verification_note: >
+      Whole-season value 5882. Checked on 2026-11-04 by comparing mf query output with independent SQL on
+      gold.fct_player_gameweek, for the whole season and by gameweek (9 rows): exact match.
+  - name: average_points_per_player_gameweek
+    description: Total fantasy points divided by player gameweeks.
+    verification: verified
+    verification_note: >
+      Whole-season value 1.39714. Checked on 2026-11-04 by comparing mf query output with independent SQL on
+      gold.fct_player_gameweek, for the whole season and by gameweek (9 rows): exact match. An earlier direct SQL check by gameweek was done on 2026-11-03.
+  - name: points_per_90
+    description: Fantasy points per 90 minutes played. Empty when no minutes were played.
+    verification: verified
+    verification_note: >
+      Whole-season value 4.18006. Checked on 2026-11-04 by comparing mf query output with independent SQL on
+      gold.fct_player_gameweek, for the whole season and by gameweek (9 rows): exact match.
+verification_scope:
+  verified_groupings: [overall, by gameweek]
+  not_yet_checked_groupings: [player, position, team, opponent]
+  note: Grouping by player, position, team or opponent has not been checked against SQL yet.
+
+freshness:
+  expectation: Refreshed daily. The product is stale if its data is older than 36 hours.
+  current_state: >
+    The schedule is not automated yet (as of 2026-11-04). Refreshing means someone runs
+    the extractor, the Bronze loader and dbt by hand, so the expectation above is a target,
+    not something that is currently enforced.
+  intended_design: Extractor at 06:00 UTC, then the Bronze loader, then dbt.
+  how_it_can_be_checked: >
+    dbt source freshness is configured on bronze._loaded_at (warn after 36 hours, error after
+    72 hours), but nothing runs it automatically. It measures when Bronze was last loaded, not
+    when the app data last changed.
+
+quality:
+  note: >
+    These are the dbt tests defined for this product: the ones on the four tables and on
+    the tables that feed them. "warn" means the test reports a problem without failing
+    the run. The whole project defines 67 tests.
+  status: >
+    Passed at last run 2026-11-03 (49 silver, 13 marts, 5 dim_gameweeks; 67 tests in the
+    whole project). Not run automatically.
+  gold_tests:   # model: test(column)
+    dim_gameweeks: [not_null(gameweek), not_null(gameweek_key), unique(gameweek_key), not_null(season)]
+    dim_players: [not_null(player_id), unique(player_id)]
+    dim_teams: [not_null(team_id), unique(team_id)]
+    fct_player_gameweek: [not_null(player_gw_stat_id), unique(player_gw_stat_id)]
+    singular:
+      - assert_player_gameweek_in_dim_gameweeks   # every gameweek in fct_player_gameweek exists in dim_gameweeks
+  upstream_silver_tests:
+    stg_fixtures: [relationships(away_team_id), relationships(home_team_id), not_null(fixture_id), unique(fixture_id), accepted_range(gameweek) (warn), matches_pattern(season) (warn)]
+    stg_gameweeks: [accepted_range(gameweek) (warn), not_null(gameweek_key), unique(gameweek_key)]
+    stg_player_gw_stats: [relationships(fixture_id), relationships(player_id), not_null(player_gw_stat_id), unique(player_gw_stat_id), not_null(player_id), not_null(total_points), accepted_range(gameweek) (warn), accepted_range(minutes) (warn), accepted_range(price_millions) (warn), matches_pattern(season) (warn)]
+    stg_players: [not_null(player_id), unique(player_id), not_null(player_position), accepted_values(player_position), relationships(team_id), accepted_range(current_price_millions) (warn), accepted_range(start_price_millions) (warn), matches_pattern(season) (warn)]
+    stg_ruleset_epochs: [not_null(ruleset_epoch_key), unique(ruleset_epoch_key), accepted_range(first_gameweek) (warn)]
+    stg_teams: [not_null(team_id), unique(team_id)]
+    singular:
+      - assert_gameweek_has_enough_rows (warn)   # reports gameweeks with fewer than 50 stat rows
+
+contract:
+  enforced_in_dbt: true   # models/marts/_marts.yml
+  enforced_since: 2026-11-04
+  types_checked_against_built_tables: 2026-11-04
+  models: [fct_player_gameweek, dim_players, dim_teams, dim_gameweeks]
+  what_it_fixes: >
+    The column names and BigQuery data types of these four tables. A missing, extra or
+    retyped column fails the dbt build.
+  price_columns: >
+    price_millions (fct_player_gameweek) and start_price_millions (dim_players) are FLOAT64.
+    Moving either to NUMERIC would be a breaking change.
+  breaking_changes: >
+    Any change to the columns or types is a breaking change that needs a version bump,
+    including moving the price columns from FLOAT64 to NUMERIC.
+  not_covered: [fct_fixtures, player_form, fct_prediction_vs_actual, metricflow_time_spine]
+
+access:
+  classification: Internal analytical data
+  personal_data: None. The product holds player and team football statistics only.
+  excluded: >
+    Pitchside user accounts and everything linked to them (users, emails, password data,
+    tokens, invite codes, error text) are not part of this product.
+
+lineage:
+  - Postgres ml schema, plus public.gameweeks and public.ruleset_epochs (on the VM)
+  - extractor.py (reads Postgres only) writes Parquet and a manifest to Cloud Storage
+  - bronze_loader.py loads BigQuery dataset bronze (a faithful copy)
+  - dbt silver (staging views in dataset silver)
+  - dbt gold (tables in dataset gold)
+  - semantic layer (pitchside_dbt/models/marts/_semantic.yml)
+
+consumption:
+  location: BigQuery project project-22f7491c-9bfd-4735-81c, dataset gold
+  semantic_layer: >
+    Metrics are defined in dbt. Querying them uses MetricFlow (mf query, from the free
+    dbt-metricflow package). The paid dbt Semantic Layer API is not used.
+  example_queries:
+    - name: Total points and average points per player gameweek, by gameweek
+      sql: |
+        select
+          gameweek,
+          sum(total_points) as total_fantasy_points,
+          safe_divide(
+            sum(total_points),
+            count(distinct concat(cast(player_id as string), '-', gameweek_key))
+          ) as average_points_per_player_gameweek
+        from `project-22f7491c-9bfd-4735-81c.gold.fct_player_gameweek`
+        where season = '2026-27'
+        group by gameweek
+        order by gameweek
+    - name: Points per 90 minutes, with the zero-minutes guard
+      sql: |
+        select
+          player_id,
+          player_name,
+          player_position,
+          team_name,
+          sum(minutes) as total_minutes,
+          sum(total_points) as total_fantasy_points,
+          case
+            when sum(minutes) = 0 then null
+            else sum(total_points) * 90.0 / sum(minutes)
+          end as points_per_90
+        from `project-22f7491c-9bfd-4735-81c.gold.fct_player_gameweek`
+        where season = '2026-27'
+        group by player_id, player_name, player_position, team_name
+        having sum(minutes) >= 270
+        order by points_per_90 desc
+        limit 10
+    - name: Gameweek status, fixtures and rules version
+      sql: |
+        select
+          gameweek,
+          fixture_count,
+          is_finished,
+          is_scored,
+          rules_version,
+          gameweek_start,
+          gameweek_end
+        from `project-22f7491c-9bfd-4735-81c.gold.dim_gameweeks`
+        where season = '2026-27'
+        order by gameweek
+
+known_limitations:
+  - Only season 2026-27 is present, and only gameweeks 1 to 9 have been played (as of 2026-11-03).
+  - Predictions are frozen at gameweeks 5 and 6 (last written 2026-09-22). They sit in fct_prediction_vs_actual, which is not part of this version of the product.
+  - "On the 2 gameweeks that have predictions, the model predicted higher than actual by about 0.7 points on average. Computed from fct_prediction_vs_actual on 2026-11-03 (gameweek 5: predicted 2.18, actual 1.45; gameweek 6: predicted 2.11, actual 1.36). It covers 2 gameweeks only and is context, not a guarantee."
+  - scored_at and is_scored in dim_gameweeks mean Pitchside's own scoring ran for the gameweek (source table public.gameweeks). They do not mean the real matches have finished. Use is_finished for that. To be confirmed with the app code.
+  - kickoff_time can be empty for postponed fixtures, so those rows have no kickoff_date and drop out of time-based queries.
+  - All six metrics were checked against SQL on 2026-11-04, but only overall and by gameweek. Grouping by player, position, team or opponent has not been checked yet.
+  - Data is a full daily snapshot, so it shows the latest state, not history.
+
+next_version_candidates:
+  - player_form is a candidate for version 1.1.0 (points per player per gameweek with a rolling three-gameweek average).

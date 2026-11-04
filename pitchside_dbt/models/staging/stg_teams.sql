@@ -10,9 +10,9 @@ select
     strength_attack_home,
     strength_attack_away,
     strength_defence_home,
-    strength_defence_away
-from {{ source('raw', 'teams') }}
-
--- Keep real seasons only (for example 2025-26). Simulation and test seasons
--- such as SIMSMOKE and 9998-00 are excluded here and stay untouched in raw.
-where regexp_contains(season, r'^20[0-9]{2}-[0-9]{2}$')
+    strength_defence_away,
+    created_at,
+    updated_at,
+    _batch_id,
+    _loaded_at
+from {{ source('bronze', 'ml_teams') }}

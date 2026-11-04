@@ -1,84 +1,510 @@
 version: 2
 
+# Staging = the Silver layer. One view per Bronze table: clear names, real number types,
+# nothing filtered out. NULLs stay NULL.
+
 models:
   - name: stg_teams
-    description: One row per team per season.
+    description: One row per team per season, with readable column names and the FPL strength ratings.
     columns:
       - name: team_id
         description: Primary key of the team row.
-        data_tests:
-          - unique
-          - not_null
+        data_tests: [unique, not_null]
+      - name: fpl_team_id
+        description: The team's id in the football API.
+      - name: season
+        description: Season label such as 2026-27.
+      - name: team_name
+        description: Full team name.
+      - name: team_short_name
+        description: Three-letter team code.
+      - name: strength_overall_home
+        description: Overall strength rating when playing at home.
+      - name: strength_overall_away
+        description: Overall strength rating when playing away.
+      - name: strength_attack_home
+        description: Attack strength rating at home.
+      - name: strength_attack_away
+        description: Attack strength rating away.
+      - name: strength_defence_home
+        description: Defence strength rating at home.
+      - name: strength_defence_away
+        description: Defence strength rating away.
+      - name: created_at
+        description: When the row was created in the app database.
+      - name: updated_at
+        description: When the row was last changed in the app database.
+      - name: _batch_id
+        description: Id of the extractor batch this row came from.
+      - name: _loaded_at
+        description: When Bronze loaded this row.
 
   - name: stg_players
-    description: One row per player per season.
+    description: One row per player per season. Prices are converted from tenths of a million to millions (55 becomes 5.5).
     columns:
       - name: player_id
         description: Primary key of the player row.
+        data_tests: [unique, not_null]
+      - name: fpl_player_id
+        description: The player's id in the football API.
+      - name: season
+        description: Season label such as 2026-27.
         data_tests:
-          - unique
-          - not_null
+          - matches_pattern:
+              pattern: '^[0-9]{4}-[0-9]{2}$'
+              config: {severity: warn}
+      - name: player_name
+        description: Full player name.
+      - name: web_name
+        description: Short display name.
+      - name: fbref_name
+        description: Name used on the FBref stats site, for matching external data.
       - name: player_position
         description: GK, DEF, MID or FWD.
         data_tests:
           - not_null
           - accepted_values:
               values: ['GK', 'DEF', 'MID', 'FWD']
+      - name: position_encoded
+        description: The position as a number, used by the model.
       - name: team_id
         description: The player's team.
         data_tests:
           - relationships:
               to: ref('stg_teams')
               field: team_id
+      - name: start_price_millions
+        description: Price at the start of the season, in millions.
+        data_tests:
+          - accepted_range:
+              min_value: 0
+              max_value: 20
+              config: {severity: warn}
+      - name: current_price_millions
+        description: Current price, in millions.
+        data_tests:
+          - accepted_range:
+              min_value: 0
+              max_value: 20
+              config: {severity: warn}
+      - name: availability_status
+        description: Availability flag from the football API (for example available or injured).
+      - name: created_at
+        description: When the row was created in the app database.
+      - name: updated_at
+        description: When the row was last changed in the app database.
+      - name: _batch_id
+        description: Id of the extractor batch this row came from.
+      - name: _loaded_at
+        description: When Bronze loaded this row.
 
   - name: stg_fixtures
-    description: One row per fixture.
+    description: One row per fixture, with kick-off time, score and whether it has started or finished.
     columns:
       - name: fixture_id
         description: Primary key of the fixture.
+        data_tests: [unique, not_null]
+      - name: fpl_fixture_id
+        description: The fixture's id in the football API.
+      - name: season
+        description: Season label such as 2026-27.
         data_tests:
-          - unique
-          - not_null
+          - matches_pattern:
+              pattern: '^[0-9]{4}-[0-9]{2}$'
+              config: {severity: warn}
+      - name: gameweek
+        description: Gameweek number the fixture belongs to.
+        data_tests:
+          - accepted_range:
+              min_value: 1
+              max_value: 38
+              config: {severity: warn}
       - name: home_team_id
+        description: The home team.
         data_tests:
           - relationships:
               to: ref('stg_teams')
               field: team_id
       - name: away_team_id
+        description: The away team.
         data_tests:
           - relationships:
               to: ref('stg_teams')
               field: team_id
+      - name: kickoff_time
+        description: Scheduled kick-off time (UTC).
+      - name: home_score
+        description: Home goals. NULL until the match is played.
+      - name: away_score
+        description: Away goals. NULL until the match is played.
+      - name: is_finished
+        description: True once the match is finished.
+      - name: is_started
+        description: True once the match has kicked off.
+      - name: is_finished_provisional
+        description: True when the match has ended but results are not yet confirmed.
+      - name: minutes_played
+        description: Minutes played so far in the match.
+      - name: created_at
+        description: When the row was created in the app database.
+      - name: updated_at
+        description: When the row was last changed in the app database.
+      - name: _batch_id
+        description: Id of the extractor batch this row came from.
+      - name: _loaded_at
+        description: When Bronze loaded this row.
 
   - name: stg_player_gw_stats
-    description: One row per player per fixture, with match statistics and points.
+    description: >
+      One row per player per fixture, with match statistics and points. Decimal stats
+      (influence, creativity, threat, ict_index and the expected_* columns) are real numbers
+      here. Missing values stay NULL: influence is NULL for the live gameweek that is not
+      populated yet.
     columns:
       - name: player_gw_stat_id
         description: Primary key of the stats row.
-        data_tests:
-          - unique
-          - not_null
+        data_tests: [unique, not_null]
       - name: player_id
+        description: The player.
         data_tests:
           - not_null
           - relationships:
               to: ref('stg_players')
               field: player_id
+      - name: fixture_id
+        description: The fixture the stats belong to.
+        data_tests:
+          - relationships:
+              to: ref('stg_fixtures')
+              field: fixture_id
+      - name: season
+        description: Season label such as 2026-27.
+        data_tests:
+          - matches_pattern:
+              pattern: '^[0-9]{4}-[0-9]{2}$'
+              config: {severity: warn}
+      - name: gameweek
+        description: Gameweek number.
+        data_tests:
+          - accepted_range:
+              min_value: 1
+              max_value: 38
+              config: {severity: warn}
+      - name: is_live
+        description: True while the gameweek is still being played, so stats may be incomplete.
+      - name: minutes
+        description: Minutes the player was on the pitch.
+        data_tests:
+          - accepted_range:
+              min_value: 0
+              max_value: 120
+              config: {severity: warn}
+      - name: goals_scored
+        description: Goals scored.
+      - name: assists
+        description: Assists.
+      - name: clean_sheets
+        description: 1 if the player's team conceded no goals while they played.
+      - name: goals_conceded
+        description: Goals conceded while the player was on the pitch.
+      - name: saves
+        description: Saves made (goalkeepers).
+      - name: bonus
+        description: Bonus points awarded (0 to 3).
+      - name: bps
+        description: Bonus points system score used to decide the bonus.
+      - name: yellow_cards
+        description: Yellow cards.
+      - name: red_cards
+        description: Red cards.
+      - name: own_goals
+        description: Own goals.
+      - name: penalties_saved
+        description: Penalties saved.
+      - name: penalties_missed
+        description: Penalties missed.
+      - name: defensive_contributions
+        description: Defensive contribution count used for defensive scoring.
+      - name: ict_index
+        description: Combined influence, creativity and threat score. NULL if missing.
+      - name: influence
+        description: How much the player influenced the match. NULL if missing (never replaced by 0).
+      - name: creativity
+        description: How much the player created chances. NULL if missing.
+      - name: threat
+        description: How much the player threatened to score. NULL if missing.
+      - name: expected_goals
+        description: Expected goals (xG). NULL if missing.
+      - name: expected_assists
+        description: Expected assists (xA). NULL if missing.
+      - name: expected_goal_involvements
+        description: Expected goals plus expected assists. NULL if missing.
+      - name: price_millions
+        description: Player price at the time, in millions (the source value is in tenths).
+        data_tests:
+          - accepted_range:
+              min_value: 0
+              max_value: 20
+              config: {severity: warn}
+      - name: selected
+        description: Number of fantasy teams that selected the player.
+      - name: transfers_in
+        description: Fantasy transfers in.
+      - name: transfers_out
+        description: Fantasy transfers out.
+      - name: transfers_balance
+        description: Transfers in minus transfers out.
+      - name: was_home
+        description: True if the player's team played at home.
+      - name: team_h_score
+        description: Home team goals in the fixture.
+      - name: team_a_score
+        description: Away team goals in the fixture.
       - name: total_points
+        description: Fantasy points the player scored.
         data_tests:
           - not_null
+      - name: created_at
+        description: When the row was created in the app database.
+      - name: _batch_id
+        description: Id of the extractor batch this row came from.
+      - name: _loaded_at
+        description: When Bronze loaded this row.
 
   - name: stg_ml_predictions
-    description: Model predictions, one row per player per gameweek per model version.
+    description: >
+      Model predictions, one row per player per gameweek per model version. FROZEN:
+      only gameweeks 5 and 6 (model xgboost_v1) exist, last written 2026-09-22. Do not
+      expect new rows until predictions are running again.
     columns:
       - name: prediction_id
         description: Primary key of the prediction row.
-        data_tests:
-          - unique
-          - not_null
+        data_tests: [unique, not_null]
       - name: player_id
+        description: The player the prediction is for.
         data_tests:
           - not_null
           - relationships:
               to: ref('stg_players')
               field: player_id
+      - name: season
+        description: Season label such as 2026-27.
+        data_tests:
+          - matches_pattern:
+              pattern: '^[0-9]{4}-[0-9]{2}$'
+              config: {severity: warn}
+      - name: gameweek
+        description: Gameweek the prediction is for.
+        data_tests:
+          - accepted_range:
+              min_value: 1
+              max_value: 38
+              config: {severity: warn}
+      - name: predicted_points
+        description: Predicted fantasy points, as a number.
+      - name: model_version
+        description: Which model made the prediction, for example xgboost_v1.
+      - name: tier_or_label
+        description: Optional label or tier attached to the prediction.
+      - name: predicted_at
+        description: When the prediction was written.
+      - name: _batch_id
+        description: Id of the extractor batch this row came from.
+      - name: _loaded_at
+        description: When Bronze loaded this row.
+
+  - name: stg_season_stats
+    description: Season-level stats per player and data source. The table is empty today, so this model returns no rows.
+    columns:
+      - name: season_stat_id
+        description: Primary key of the row.
+        data_tests: [unique, not_null]
+      - name: player_id
+        description: The player.
+        data_tests:
+          - relationships:
+              to: ref('stg_players')
+              field: player_id
+      - name: season
+        description: Season label.
+      - name: data_source
+        description: Where the numbers came from.
+      - name: total_minutes
+        description: Total minutes played in the season.
+      - name: matches_played
+        description: Matches played.
+      - name: fpl_total_points
+        description: Total fantasy points.
+      - name: goals
+        description: Goals in the season.
+      - name: assists
+        description: Assists in the season.
+      - name: shots
+        description: Shots.
+      - name: shots_on_target
+        description: Shots on target.
+      - name: xg_season
+        description: Season expected goals, as a number.
+      - name: xa_season
+        description: Season expected assists, as a number.
+      - name: saves
+        description: Saves.
+      - name: clean_sheets
+        description: Clean sheets.
+      - name: gk_save_pct
+        description: Goalkeeper save percentage, as a number.
+      - name: starts
+        description: Matches started.
+      - name: mins_per_match
+        description: Average minutes per match.
+      - name: on_off_diff
+        description: Team goal difference with the player on the pitch versus off it, as a number.
+      - name: created_at
+        description: When the row was created in the app database.
+      - name: _batch_id
+        description: Id of the extractor batch this row came from.
+      - name: _loaded_at
+        description: When Bronze loaded this row.
+
+  - name: stg_player_gw_features
+    description: >
+      Rolling-form features per player per gameweek, built for the prediction model. The
+      table is empty today, so this model returns no rows. Rolling averages are real numbers here.
+    columns:
+      - name: feature_id
+        description: Primary key of the row.
+        data_tests: [unique, not_null]
+      - name: player_id
+        description: The player.
+        data_tests:
+          - relationships:
+              to: ref('stg_players')
+              field: player_id
+      - name: season
+        description: Season label.
+      - name: gameweek
+        description: Gameweek number.
+        data_tests:
+          - accepted_range:
+              min_value: 1
+              max_value: 38
+              config: {severity: warn}
+      - name: pts_rolling_3gw
+        description: Average points over the last 3 gameweeks.
+      - name: pts_rolling_5gw
+        description: Average points over the last 5 gameweeks.
+      - name: minutes_rolling_3gw
+        description: Average minutes over the last 3 gameweeks.
+      - name: goals_rolling_5gw
+        description: Average goals over the last 5 gameweeks.
+      - name: assists_rolling_5gw
+        description: Average assists over the last 5 gameweeks.
+      - name: clean_sheets_rolling_5gw
+        description: Average clean sheets over the last 5 gameweeks.
+      - name: saves_rolling_3gw
+        description: Average saves over the last 3 gameweeks.
+      - name: bonus_rolling_3gw
+        description: Average bonus points over the last 3 gameweeks.
+      - name: bps_rolling_3gw
+        description: Average bonus points system score over the last 3 gameweeks.
+      - name: ict_rolling_3gw
+        description: Average ICT index over the last 3 gameweeks.
+      - name: xg_rolling_5gw
+        description: Average expected goals over the last 5 gameweeks.
+      - name: xa_rolling_5gw
+        description: Average expected assists over the last 5 gameweeks.
+      - name: xgi_rolling_5gw
+        description: Average expected goal involvements over the last 5 gameweeks.
+      - name: position_encoded
+        description: Position as a number.
+      - name: was_home
+        description: True if the player's team played at home.
+      - name: price_current
+        description: Player price used as a feature, as a number. The unit is not converted here.
+      - name: ownership_count
+        description: Number of fantasy teams owning the player.
+      - name: next_gw_points
+        description: The label, meaning the points scored in the following gameweek, filled in later.
+      - name: features_computed_at
+        description: When the features were calculated.
+      - name: label_filled_at
+        description: When the label was filled in.
+      - name: _batch_id
+        description: Id of the extractor batch this row came from.
+      - name: _loaded_at
+        description: When Bronze loaded this row.
+
+  - name: stg_fixture_poll_schedule
+    description: One row per fixture showing when the app planned to check the match for half-time and full-time results and when it actually did.
+    columns:
+      - name: poll_schedule_id
+        description: Primary key of the row.
+        data_tests: [unique, not_null]
+      - name: fixture_id
+        description: The fixture being polled.
+        data_tests:
+          - relationships:
+              to: ref('stg_fixtures')
+              field: fixture_id
+      - name: is_halftime_scheduled
+        description: True if a half-time check is scheduled.
+      - name: is_fulltime_scheduled
+        description: True if a full-time check is scheduled.
+      - name: scheduled_at
+        description: When the first check is planned.
+      - name: halftime_polled_at
+        description: When the half-time check ran. NULL if not yet.
+      - name: fulltime_polled_at
+        description: When the full-time check ran. NULL if not yet.
+      - name: final_polled_at
+        description: When the final check ran. NULL if not yet.
+      - name: _batch_id
+        description: Id of the extractor batch this row came from.
+      - name: _loaded_at
+        description: When Bronze loaded this row.
+
+  - name: stg_gameweeks
+    description: One row per gameweek that has been scored. The source has no id, so gameweek_key is built from season and gameweek.
+    columns:
+      - name: gameweek_key
+        description: Season and gameweek joined together, for example 2026-27-5.
+        data_tests: [unique, not_null]
+      - name: season
+        description: Season label.
+      - name: gameweek
+        description: Gameweek number.
+        data_tests:
+          - accepted_range:
+              min_value: 1
+              max_value: 38
+              config: {severity: warn}
+      - name: scored_at
+        description: When the gameweek was scored.
+      - name: _batch_id
+        description: Id of the extractor batch this row came from.
+      - name: _loaded_at
+        description: When Bronze loaded this row.
+
+  - name: stg_ruleset_epochs
+    description: Which version of the scoring rules applies from which gameweek. The source has no id, so ruleset_epoch_key is built from season and rules version.
+    columns:
+      - name: ruleset_epoch_key
+        description: Season and rules version joined together, for example 2026-27-v1.
+        data_tests: [unique, not_null]
+      - name: season
+        description: Season label.
+      - name: rules_version
+        description: Version number of the scoring rules.
+      - name: first_gameweek
+        description: First gameweek the rules apply to.
+        data_tests:
+          - accepted_range:
+              min_value: 1
+              max_value: 38
+              config: {severity: warn}
+      - name: created_at
+        description: When the row was created in the app database.
+      - name: _batch_id
+        description: Id of the extractor batch this row came from.
+      - name: _loaded_at
+        description: When Bronze loaded this row.

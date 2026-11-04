@@ -9,9 +9,12 @@ select
     kickoff_time,
     home_score,
     away_score,
-    finished as is_finished
-from {{ source('raw', 'fixtures') }}
-
--- Keep real seasons only (for example 2025-26). Simulation and test seasons
--- such as SIMSMOKE and 9998-00 are excluded here and stay untouched in raw.
-where regexp_contains(season, r'^20[0-9]{2}-[0-9]{2}$')
+    finished as is_finished,
+    started as is_started,
+    finished_provisional as is_finished_provisional,
+    minutes as minutes_played,
+    created_at,
+    updated_at,
+    _batch_id,
+    _loaded_at
+from {{ source('bronze', 'ml_fixtures') }}

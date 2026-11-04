@@ -1,4 +1,7 @@
 -- One row per player per fixture, with prices converted to millions.
+-- Bronze stores the decimal stats as text, so they are cast to NUMERIC here.
+-- SAFE_CAST gives NULL (not an error) for a missing value. NULLs are kept, never
+-- replaced with 0: influence is NULL for the live gameweek that is not populated yet.
 select
     id as player_gw_stat_id,
     player_id,
@@ -19,13 +22,14 @@ select
     own_goals,
     penalties_saved,
     penalties_missed,
-    ict_index,
-    influence,
-    creativity,
-    threat,
-    expected_goals,
-    expected_assists,
-    expected_goal_involvements,
+    defensive_contributions,
+    safe_cast(ict_index as numeric) as ict_index,
+    safe_cast(influence as numeric) as influence,
+    safe_cast(creativity as numeric) as creativity,
+    safe_cast(threat as numeric) as threat,
+    safe_cast(expected_goals as numeric) as expected_goals,
+    safe_cast(expected_assists as numeric) as expected_assists,
+    safe_cast(expected_goal_involvements as numeric) as expected_goal_involvements,
     value / 10.0 as price_millions,
     selected,
     transfers_in,
@@ -34,9 +38,8 @@ select
     was_home,
     team_h_score,
     team_a_score,
-    total_points
-from {{ source('raw', 'player_gw_stats') }}
-
--- Keep real seasons only (for example 2025-26). Simulation and test seasons
--- such as SIMSMOKE and 9998-00 are excluded here and stay untouched in raw.
-where regexp_contains(season, r'^20[0-9]{2}-[0-9]{2}$')
+    total_points,
+    created_at,
+    _batch_id,
+    _loaded_at
+from {{ source('bronze', 'ml_player_gw_stats') }}

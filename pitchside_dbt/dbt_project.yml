@@ -33,5 +33,7 @@ models:
    pitchside_dbt:
        staging:
          +materialized: view
+         +schema: silver
        marts:
          +materialized: table
+         +schema: gold
