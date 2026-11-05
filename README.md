@@ -2,6 +2,8 @@
 
 An analytics-engineering project built on the data behind [Pitchside](https://github.com/skt0909/EXP), a full-stack fantasy football app (FastAPI, PostgreSQL, React, XGBoost). It copies the app's data into a cloud warehouse and models it with dbt.
 
+**Project site:** https://skt0909.github.io/pitchside-data-platform/ (snapshot of the data as of 2026-11-03)
+
 > **Status:** repo layout and secrets are set up (Stage 1). The extractor and Bronze loader are in `ingestion/vm/`. The dbt project in `pitchside_dbt/` comes from an earlier version and has not been changed yet.
 
 ## Architecture
