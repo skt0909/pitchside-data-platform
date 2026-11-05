@@ -1,0 +1,754 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pitchside Data Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: tabbed site generated from the repository. Off-white page, grey hero with soft radial glows,
+   white panels with pale borders. Hierarchy from light-to-dark tone only. No accent. */
+:root {
+  --page: #F8F9FB; --hero: #E2E5E9; --glow: rgba(31,35,40,.10);
+  --ink: #1F2328; --slate: #6B7280; --line: #C9CED6; --panel: #FFFFFF; --panel-2: #EEF0F3; --ink-inverse: #F8F9FB;
+  --t1: #1F2328; --t2: #4B525B; --t3: #7A818C; --t4: #A9AFB8;
+  --font-head: "DM Sans", "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-body: "DM Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --page:#14161A; --hero:#1C1F25; --glow:rgba(255,255,255,.06); --ink:#ECEEF1; --slate:#9AA1AC; --line:#323741;
+    --panel:#1A1D22; --panel-2:#22262D; --ink-inverse:#14161A; --t1:#ECEEF1; --t2:#B4BAC4; --t3:#858C97; --t4:#5B626D; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --page:#14161A; --hero:#1C1F25; --glow:rgba(255,255,255,.06); --ink:#ECEEF1; --slate:#9AA1AC; --line:#323741;
+  --panel:#1A1D22; --panel-2:#22262D; --ink-inverse:#14161A; --t1:#ECEEF1; --t2:#B4BAC4; --t3:#858C97; --t4:#5B626D; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+a { color: inherit; }
+body { background: var(--page); color: var(--ink); font-family: var(--font-body); font-size: 16px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; border-radius: 4px; }
+.wrap { max-width: 1120px; margin-inline: auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1,h2,h3 { font-family: var(--font-head); text-wrap: balance; letter-spacing: -.025em; margin: 0; }
+h2 { font-size: clamp(30px,4.4vw,46px); line-height: 1.08; font-weight: 700; margin-top: 10px; }
+h3 { font-weight: 600; }
+.eyebrow { font-family: var(--font-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--slate); }
+.sec-lede { max-width: 64ch; color: var(--slate); margin: 14px 0 0; font-size: 17px; }
+code, .mono { font-family: var(--font-mono); }
+.sub { margin: 56px 0 0; font-size: 24px; letter-spacing: -.02em; }
+.sub + .sec-lede { margin-top: 8px; font-size: 16px; }
+
+.top { background: var(--page); border-bottom: 1px solid var(--line); }
+.top .wrap { display: flex; align-items: center; gap: 24px; padding-block: 12px; }
+.brand { font-family: var(--font-head); font-weight: 700; letter-spacing: -.01em; display: flex; align-items: center; gap: 10px; white-space: nowrap; text-decoration: none; }
+.brand-mark { width: 22px; height: 22px; border-radius: 6px; background: var(--ink); position: relative; flex: none; }
+.brand-mark::after { content: ""; position: absolute; left: 4px; right: 4px; top: 10px; height: 2px; background: var(--page); }
+.tabs { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; min-width: 0; }
+.tabs::-webkit-scrollbar { display: none; }
+.tabs a { white-space: nowrap; text-decoration: none; font-size: 14px; font-weight: 500; color: var(--slate); padding: 8px 14px; border-radius: 9px; }
+.tabs a:hover { color: var(--ink); }
+.tabs a[aria-current="page"] { background: var(--panel-2); color: var(--ink); box-shadow: inset 0 0 0 1px var(--line); }
+@media (max-width: 760px) { .top .wrap { flex-direction: column; align-items: stretch; gap: 8px; } }
+
+[data-view] { display: none; } [data-view].on { display: block; }
+.pad { padding-block: 56px 80px; }
+
+.hero { background: radial-gradient(60% 80% at 12% 10%, var(--glow), transparent 70%), radial-gradient(50% 70% at 92% 85%, var(--glow), transparent 70%), var(--hero); }
+.hero .wrap { padding-block: 40px 44px; }
+.hero .facts { margin-top: 0; border-top: 0; }
+.badge { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px; font-size: 13px; font-weight: 500; }
+.badge i { width: 6px; height: 6px; border-radius: 50%; background: var(--ink); }
+h1 { font-size: clamp(44px,8vw,92px); line-height: 1.02; font-weight: 700; margin-top: 26px; }
+h1 span { display: block; } h1 .soft { color: var(--slate); }
+.lede { max-width: 58ch; margin: 26px 0 0; font-size: 19px; color: var(--slate); }
+.cta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 34px; }
+.btn { display: inline-flex; align-items: center; font-weight: 600; font-size: 15px; padding: 13px 22px; border-radius: 10px; text-decoration: none; border: 1px solid var(--ink); font-family: var(--font-body); }
+.btn-primary { background: var(--ink); color: var(--ink-inverse); } .btn-primary:hover { opacity: .88; }
+.btn-secondary { background: transparent; color: var(--ink); border-color: var(--line); } .btn-secondary:hover { border-color: var(--ink); }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px,1fr)); margin: 52px 0 0; padding: 0; list-style: none; border-top: 1px solid var(--line); }
+.facts li { padding: 22px 20px 4px 0; } .facts li + li { padding-left: 20px; border-left: 1px solid var(--line); }
+.facts span { display: block; font-size: 13px; color: var(--slate); }
+.facts b { display: block; font-family: var(--font-head); font-size: 34px; letter-spacing: -.02em; line-height: 1.15; font-variant-numeric: tabular-nums; }
+.facts small { font-family: var(--font-mono); font-size: 12px; color: var(--slate); }
+@media (max-width: 700px) { .facts li + li { border-left: 0; padding-left: 0; } }
+
+.layers { margin-top: 28px; display: flex; flex-wrap: wrap; align-items: stretch; gap: 10px; padding: 16px; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; }
+.layer { flex: 1 1 140px; min-width: 0; border: 1px solid var(--line); border-left: 3px solid var(--c); border-radius: 12px; padding: 14px 16px; background: var(--page); }
+.layer code { font-size: 13px; }
+.layer b { display: block; font-family: var(--font-head); font-size: 30px; line-height: 1.15; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.layer b small { font-size: 14px; font-weight: 500; color: var(--slate); letter-spacing: 0; }
+.layer p { margin: 2px 0 0; font-size: 13.5px; color: var(--slate); }
+.gate { align-self: center; width: 8px; color: var(--slate); font-family: var(--font-mono); flex: none; }
+@media (max-width: 860px) { .gate { display: none; } .layer { flex-basis: 100%; } }
+
+.grid { margin-top: 28px; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px,1fr)); gap: 16px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 24px; min-width: 0; text-decoration: none; color: inherit; display: block; }
+a.card:hover { border-color: var(--ink); }
+.card .ico { width: 36px; height: 36px; border: 1px solid var(--line); border-radius: 10px; display: grid; place-items: center; margin-bottom: 16px; background: var(--panel-2); }
+.card .ico svg { width: 18px; height: 18px; stroke: var(--ink); fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.card h3 { font-size: 19px; letter-spacing: -.015em; } .card p { margin: 8px 0 0; color: var(--slate); font-size: 15px; }
+.card small { display: block; margin-top: 14px; font-family: var(--font-mono); font-size: 12px; color: var(--slate); }
+
+.stage { display: grid; grid-template-columns: 150px minmax(0,1fr) minmax(0,1.2fr); gap: 8px 28px; padding: 22px 0; border-top: 1px solid var(--line); align-items: start; }
+.stage:last-child { border-bottom: 1px solid var(--line); }
+.where { font-family: var(--font-mono); font-size: 12px; color: var(--slate); letter-spacing: .04em; text-transform: uppercase; padding-top: 5px; }
+.stage h3 { font-size: 21px; } .stage p { margin: 4px 0 0; color: var(--slate); font-size: 15px; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.tags code { font-size: 12.5px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 6px; padding: 3px 8px; }
+@media (max-width: 820px) { .stage { grid-template-columns: 1fr; gap: 6px; } .where { padding-top: 0; } }
+.note { margin-top: 20px; font-size: 14px; color: var(--slate); } .note b { color: var(--ink); font-weight: 600; }
+
+.tbl { margin-top: 20px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; overflow-x: auto; }
+.tbl table { width: 100%; border-collapse: collapse; font-size: 14.5px; min-width: 560px; }
+.tbl th { text-align: left; font-family: var(--font-mono); font-size: 11.5px; letter-spacing: .07em; text-transform: uppercase; color: var(--slate); font-weight: 500; padding: 12px 20px; }
+.tbl td { padding: 12px 20px; border-top: 1px solid var(--line); vertical-align: top; }
+.tbl td.m { font-family: var(--font-mono); font-size: 13px; white-space: nowrap; }
+.tbl td.s { color: var(--slate); }
+.pill { display: inline-block; font-family: var(--font-mono); font-size: 12px; border: 1px solid var(--line); border-radius: 999px; padding: 2px 10px; background: var(--panel); white-space: nowrap; }
+.pill.dim { color: var(--slate); } .pill.solid { background: var(--ink); color: var(--ink-inverse); border-color: var(--ink); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chips code { font-size: 12.5px; border: 1px solid var(--line); border-radius: 7px; padding: 2px 8px; background: var(--page); }
+.chips code.w { color: var(--slate); border-style: dashed; }
+
+.two { margin-top: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px,1fr)); gap: 16px; }
+.box { border: 1px solid var(--line); border-radius: 14px; padding: 24px; background: var(--panel); min-width: 0; }
+.box h3 { font-size: 19px; }
+.box ul { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 11px; }
+.box li { padding-left: 20px; position: relative; color: var(--slate); font-size: 15px; }
+.box li::before { content: ""; position: absolute; left: 0; top: 11px; width: 8px; height: 1px; background: var(--ink); }
+.box li b { color: var(--ink); font-weight: 600; }
+.box p { color: var(--slate); font-size: 15px; margin: 10px 0 0; }
+
+/* graphs */
+.graph { margin-top: 28px; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; overflow-x: auto; }
+.graph svg { display: block; font-family: var(--font-mono); }
+.hint2 { display: none; }
+.g-col { fill: var(--slate); font-size: 11px; letter-spacing: .07em; text-transform: uppercase; }
+.g-node rect { fill: var(--page); stroke: var(--line); stroke-width: 1.2; }
+.g-node text { fill: var(--ink); font-size: 11.5px; }
+.g-node { cursor: pointer; }
+.g-node.l-bronze rect { stroke: var(--t4); } .g-node.l-silver rect { stroke: var(--t3); } .g-node.l-gold rect { stroke: var(--t1); stroke-width: 1.6; }
+.g-node:hover rect { fill: var(--panel-2); }
+.g-node.sel rect { fill: var(--ink); } .g-node.sel text { fill: var(--ink-inverse); }
+.g-node.rel rect { fill: var(--panel-2); stroke: var(--ink); }
+.g-edge { fill: none; stroke: var(--t4); stroke-width: 1.1; opacity: .7; }
+.g-edge.hot { stroke: var(--ink); stroke-width: 1.8; opacity: 1; }
+.graph.focus .g-node:not(.sel):not(.rel) { opacity: .28; } .graph.focus .g-edge:not(.hot) { opacity: .12; }
+.g-node:focus-visible rect { stroke: var(--ink); stroke-width: 2.5; }
+.info { margin-top: 16px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 20px 22px; min-width: 0; }
+.info h3 { font-family: var(--font-mono); font-weight: 500; font-size: 16px; letter-spacing: 0; word-break: break-word; }
+.info p { color: var(--slate); font-size: 14.5px; margin: 8px 0 0; }
+.info .row { margin-top: 12px; display: grid; gap: 4px; font-size: 14px; }
+.info .row b { font-family: var(--font-mono); font-size: 11.5px; letter-spacing: .07em; text-transform: uppercase; color: var(--slate); font-weight: 500; }
+.hint { font-size: 13.5px; color: var(--slate); margin-top: 12px; }
+
+.model { margin-top: 28px; display: grid; grid-template-columns: minmax(0,1fr); gap: 16px; align-items: start; }
+.diagram { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 12px; overflow-x: auto; }
+.diagram svg { display: block; width: 100%; min-width: 600px; height: auto; font-family: var(--font-mono); }
+.ent rect.box { fill: var(--page); stroke: var(--line); stroke-width: 1.2; }
+.ent rect.head { fill: var(--panel-2); }
+.ent.fact rect.head { fill: var(--ink); } .ent.fact text.t { fill: var(--ink-inverse); }
+.ent text.t { fill: var(--ink); font-size: 13px; font-weight: 500; } .ent text.s { fill: var(--slate); font-size: 11px; } .ent text.k { fill: var(--ink); font-size: 11px; }
+.ent { cursor: pointer; } .ent:hover rect.box { stroke: var(--slate); }
+.ent.sel rect.box { stroke: var(--ink); stroke-width: 2.2; }
+.ent:focus-visible { outline: none; } .ent:focus-visible rect.box { stroke: var(--ink); stroke-width: 2.6; }
+.rel-l { stroke: var(--slate); stroke-width: 1.3; fill: none; } .rel-t { fill: var(--slate); font-size: 10.5px; }
+.detail { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 20px; min-width: 0; }
+.detail h3 { font-family: var(--font-mono); font-weight: 500; font-size: 17px; letter-spacing: 0; word-break: break-word; }
+.detail .meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.detail > p { color: var(--slate); font-size: 14.5px; margin: 12px 0 0; }
+.meta2 { margin-top: 16px; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.meta2 div { padding: 10px 14px; border-top: 1px solid var(--line); min-width: 0; }
+.meta2 b { display: block; font-family: var(--font-mono); font-size: 11px; letter-spacing: .07em; text-transform: uppercase; color: var(--slate); font-weight: 500; }
+.meta2 span { font-size: 14px; overflow-wrap: anywhere; }
+.colt { margin-top: 14px; border-top: 1px solid var(--line); max-height: 460px; overflow: auto; }
+.colt table { width: 100%; border-collapse: collapse; font-size: 13.5px; min-width: 480px; }
+.colt td { padding: 8px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.colt td:first-child { font-family: var(--font-mono); font-size: 12.5px; white-space: nowrap; }
+.colt td.ty { font-family: var(--font-mono); font-size: 11.5px; color: var(--slate); white-space: nowrap; }
+.colt td.de { color: var(--slate); }
+.also { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 14px; color: var(--slate); }
+.also button { font: inherit; font-family: var(--font-mono); font-size: 12.5px; background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 5px 11px; cursor: pointer; }
+.also button:hover, .also button.on { border-color: var(--ink); }
+
+.tiles { margin-top: 28px; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap: 12px; }
+.tile { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; }
+.tile span { font-size: 13px; color: var(--slate); display: block; }
+.tile b { font-family: var(--font-head); font-size: 32px; letter-spacing: -.02em; line-height: 1.15; display: block; font-variant-numeric: tabular-nums; }
+.tile small { font-family: var(--font-mono); font-size: 12px; color: var(--slate); }
+.metric { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 20px 22px; min-width: 0; }
+.metric .v { font-family: var(--font-head); font-size: 30px; letter-spacing: -.02em; font-variant-numeric: tabular-nums; line-height: 1.15; }
+.metric code { overflow-wrap: anywhere; }
+.metric h3 { font-size: 17px; margin-top: 8px; overflow-wrap: anywhere; } .metric p { color: var(--slate); font-size: 14px; margin: 6px 0 0; }
+.metric .top2 { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+
+.cat { margin-top: 28px; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
+.cat-head { display: flex; flex-wrap: wrap; gap: 14px 20px; align-items: center; justify-content: space-between; padding: 22px 24px; border-bottom: 1px solid var(--line); }
+.cat-head h3 { font-size: 22px; font-family: var(--font-mono); font-weight: 500; letter-spacing: 0; }
+.cat-head .meta { display: flex; flex-wrap: wrap; gap: 8px; }
+.cat-body { padding: 22px 24px; display: grid; gap: 6px; }
+.cat-body p { margin: 0; color: var(--slate); }
+.cat-tools { padding: 14px 24px; border-block: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.cat-tools input { flex: 1 1 220px; min-width: 0; font: inherit; font-size: 15px; color: var(--ink); background: var(--page); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; }
+.cat-tools input::placeholder { color: var(--slate); }
+.seg { display: flex; flex-wrap: wrap; gap: 8px; }
+.seg button { font: inherit; font-size: 13px; font-weight: 500; background: var(--panel); color: var(--slate); border: 1px solid var(--line); border-radius: 999px; padding: 7px 16px; cursor: pointer; }
+.seg button:hover { border-color: var(--ink); color: var(--ink); }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--ink-inverse); border-color: var(--ink); }
+.empty { padding: 22px 24px; color: var(--slate); display: none; }
+.sql { margin-top: 16px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+.sql header { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 18px; border-bottom: 1px solid var(--line); font-size: 14.5px; font-weight: 500; }
+.sql button { font: inherit; font-size: 12.5px; font-family: var(--font-mono); background: transparent; color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 4px 10px; cursor: pointer; }
+.sql button:hover { border-color: var(--ink); }
+.sql pre { margin: 0; padding: 16px 18px; overflow-x: auto; font-family: var(--font-mono); font-size: 12.5px; line-height: 1.6; color: var(--ink); background: var(--page); }
+
+.archbox { margin-top: 28px; background: var(--panel); border: 1px solid var(--line); border-radius: 18px; overflow-x: auto; }
+.archbox svg { display: block; width: 100%; min-width: 1000px; height: auto; font-family: var(--font-mono); }
+.a-lane { fill: none; stroke: var(--line); stroke-width: 1.2; stroke-dasharray: 5 5; }
+.a-band { fill: var(--page); stroke: var(--line); stroke-width: 1.1; stroke-dasharray: 4 4; }
+.a-line { fill: none; stroke: var(--slate); stroke-width: 1.5; }
+.a-plan { fill: none; stroke: var(--slate); stroke-width: 1.3; stroke-dasharray: 5 4; }
+.a-gate circle { fill: var(--panel); stroke: var(--ink); stroke-width: 1.4; } .a-gate text { fill: var(--ink); font-size: 12px; text-anchor: middle; }
+.a-h { fill: var(--slate); font-size: 12.5px; letter-spacing: .08em; text-transform: uppercase; }
+.a-n { fill: var(--ink); font-size: 14px; font-weight: 500; } .a-b { fill: var(--ink); font-family: var(--font-head); font-size: 26px; font-weight: 700; }
+.a-s { fill: var(--slate); font-size: 12.5px; } .a-i { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.a-sol { fill: var(--panel-2); } .a-small { fill: var(--ink); font-size: 13.5px; }
+.a-pill { fill: var(--panel); stroke: var(--line); stroke-width: 1.1; }
+.legend { margin-top: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px,1fr)); gap: 16px; }
+.legend .box ol, .legend .box ul { list-style: none; counter-reset: g; margin: 14px 0 0; padding: 0; display: grid; gap: 11px; }
+.legend .box ol li { counter-increment: g; padding-left: 34px; }
+.legend .box ol li::before { content: counter(g); width: 22px; height: 22px; border: 1px solid var(--ink); border-radius: 50%; background: transparent; top: 1px; display: grid; place-items: center; font-family: var(--font-mono); font-size: 12px; color: var(--ink); }
+.legend .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 8px; }
+.legend .box ul li::before { display: none; } .legend .box ul li { padding-left: 0; }
+.callout { margin-top: 20px; border: 1px solid var(--ink); border-radius: 14px; padding: 22px 24px; background: var(--panel); display: grid; grid-template-columns: repeat(auto-fit, minmax(260px,1fr)); gap: 20px; }
+.callout h3 { font-size: 18px; } .callout p { color: var(--slate); font-size: 15px; margin: 6px 0 0; }
+footer { border-top: 1px solid var(--line); }
+footer .wrap { padding-block: 28px; display: flex; flex-wrap: wrap; gap: 10px 32px; justify-content: space-between; font-size: 14px; color: var(--slate); }
+</style>
+
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <a class="brand" href="#overview"><span class="brand-mark" aria-hidden="true"></span>pitchside-data-platform</a>
+  <nav class="tabs" id="tabs" aria-label="Sections">
+    <a href="#overview">Overview</a><a href="#architecture">Architecture</a><a href="#lineage">Data lineage</a><a href="#data-model">Data model</a><a href="#metadata">Metadata</a>
+    <a href="#quality">Data quality</a><a href="#metrics">Metrics</a><a href="#catalog">Data catalog</a>
+  </nav>
+</div></header>
+
+<main>
+<!-- OVERVIEW -->
+<section data-view="overview" class="on">
+  <div class="hero"><div class="wrap">
+    <ul class="facts" id="facts"></ul>
+  </div></div>
+  <div class="wrap pad">
+    <div class="eyebrow">The layers</div>
+    <h2>Ten source tables, one data product</h2>
+    <p class="sec-lede">Each layer has one job. Data moves forward only, and every daily snapshot stays in the lake.</p>
+    <div class="layers" id="layers"></div>
+    <p class="note"><b>Data as of 2026-11-03.</b> Season 2026-27, gameweeks 1 to 9. The pipeline is run by hand today and is not yet scheduled, so these figures are a snapshot.</p>
+    <h3 class="sub">What is on this site</h3>
+    <div class="grid" id="toolkit"></div>
+  </div>
+</section>
+
+<!-- ARCHITECTURE -->
+<section data-view="architecture"><div class="wrap pad">
+  <div class="eyebrow">Architecture</div>
+  <h2>App to Marketplace</h2>
+  <p class="sec-lede">Data moves in one direction, one hop at a time. dbt and the marketplace run off the VM.</p>
+  <div class="tiles" id="atiles"></div>
+  <h3 class="sub">Data Flow</h3>
+  <p class="sec-lede">From the app's database, through three quality gates, to the people and tools that use it. The Gold layer holds the tables and the semantic layer together.</p>
+  <div class="archbox"><svg id="archsvg" viewBox="0 0 1360 600" role="img" aria-label="Pipeline diagram from Postgres through the lake, Bronze, Silver and Gold with its semantic layer, to consumers"></svg></div>
+  <div class="callout">
+    <div><h3>Gold is two things</h3><p>The Gold tables hold the numbers. The semantic layer sits on top of them and holds the definitions, so a metric such as points per 90 minutes is calculated the same way for everyone.</p></div>
+    <div><h3>Both live in dbt</h3><p>Tables are built from <code>models/marts/*.sql</code>. The semantic layer is <code>_semantic.yml</code> in the same folder: 4 semantic models and 6 metrics, queried with <code>mf query</code>.</p></div>
+    <div><h3>What the product promises</h3><p>The data product contract names four Gold tables and six metrics, with their types, tests, limits and freshness. It is documentation and a promise to consumers.</p></div>
+  </div>
+  <div class="legend">
+    <div class="box"><h3>The 3 gates</h3><ol>
+      <li><b>The load.</b> Row counts must match the batch manifest before Bronze is replaced. A mismatch stops the load.</li>
+      <li><b>The source.</b> Freshness on <code>_loaded_at</code> warns after 36 hours and errors after 72.</li>
+      <li><b>The build.</b> dbt tests and enforced contracts must pass before Gold is trusted.</li></ol></div>
+    <div class="box"><h3>The layers</h3><ul>
+      <li><span class="dot" style="background:var(--t4)"></span><b>lake:</b> dated Parquet and a manifest per batch, kept as history.</li>
+      <li><span class="dot" style="background:var(--t3)"></span><b>bronze:</b> a faithful copy, replaced each load, numbers stored as text.</li>
+      <li><span class="dot" style="background:var(--t2)"></span><b>silver:</b> ten views that rename and cast, no business rules.</li>
+      <li><span class="dot" style="background:var(--t1)"></span><b>gold:</b> seven tables plus the semantic layer on top.</li></ul></div>
+    <div class="box"><h3>Around it</h3><ul>
+      <li><b>sources:</b> one Postgres database, fed by the app from the football API.</li>
+      <li><b>metadata:</b> the data product contract, the dbt manifest and the lineage links.</li>
+      <li><b>ops:</b> batch manifests, dbt run results and, once scheduled, a status file per run.</li>
+      <li><b>dashed lines:</b> planned, not running yet.</li></ul></div>
+  </div>
+  <h3 class="sub">Step by step</h3>
+  <div style="margin-top:20px" id="hops"></div>
+  <p class="note"><b>Status (2026-11-04).</b> The extractor and Bronze loader run end to end when started by hand. The 06:00 UTC schedule and a scheduled dbt run are the next steps.</p>
+  <h3 class="sub">Security model</h3>
+  <div class="two">
+    <div class="box"><h3>Database access</h3><ul>
+      <li><b>Dedicated role.</b> <code>extract_role</code> can log in, with at most 2 connections, and read only the 10 approved tables.</li>
+      <li><b>Heartbeats.</b> On <code>task_heartbeats</code> it can read three columns only.</li>
+      <li><b>Checked.</b> Reading <code>users</code> and <code>last_error</code> is denied.</li>
+      <li><b>No reuse.</b> It shares nothing with the existing <code>existing_readonly_role</code> role.</li></ul></div>
+    <div class="box"><h3>Cloud access and exclusions</h3><ul>
+      <li><b>No key files.</b> The VM acts as the <code>extractor-service-account</code> service account by impersonation.</li>
+      <li><b>Never extracted.</b> users, password reset tokens, invite codes, the <code>last_error</code> column, <code>alembic_version</code> and all user-linked tables.</li>
+      <li><b>Not in git.</b> Passwords and tokens stay on the VM.</li></ul></div>
+  </div>
+  <h3 class="sub">Decisions</h3>
+  <p class="sec-lede">A selection from the project's decision log, with what each one costs.</p>
+  <div class="tbl"><table><thead><tr><th>Decision</th><th>Reason</th><th>Trade-off</th></tr></thead><tbody id="decisions"></tbody></table></div>
+</div></section>
+
+<!-- LINEAGE -->
+<section data-view="lineage"><div class="wrap pad">
+  <div class="eyebrow">Data lineage</div>
+  <h2>Table feeds</h2>
+  <p class="sec-lede">10 Bronze tables, 10 Silver views and 7 Gold tables, with 25 dependencies read from the dbt SQL. Select a table to see what sits upstream and downstream of it. Scroll sideways to follow it into Gold.</p>
+  <div class="graph" id="graph"></div>
+  <div class="info" id="ginfo" aria-live="polite"></div>
+  <p class="hint">The time spine (<code>metricflow_time_spine</code>) has no upstream tables and is left out of the graph. Operational lineage (which batch loaded when) comes from the extractor manifests and will be added alongside it.</p>
+</div></section>
+
+<!-- DATA MODEL -->
+<section data-view="data-model"><div class="wrap pad">
+  <div class="eyebrow">Data model</div>
+  <h2>A star around player performance</h2>
+  <p class="sec-lede">One fact table at the centre, joined to the tables it depends on. Select a table to see its columns, types and tests.</p>
+  <div class="model">
+    <div class="diagram">
+      <svg viewBox="0 0 960 520" role="group" aria-label="Entity relationship diagram of the Gold tables">
+        <path class="rel-l" d="M365 215 H312 V90 H260"/><path class="rel-l" d="M365 300 H312 V390 H260"/>
+        <path class="rel-l" d="M145 150 V330"/><path class="rel-l" d="M595 215 H648 V90 H700"/><path class="rel-l" d="M595 300 H648 V390 H700"/>
+        <path class="rel-l" d="M815 450 V492 H145 V450"/>
+        <text class="rel-t" x="270" y="82">player_id</text><text class="rel-t" x="270" y="382">team_id</text>
+        <text class="rel-t" x="152" y="244">team_id</text><text class="rel-t" x="602" y="82">gameweek_key</text>
+        <text class="rel-t" x="602" y="382">fixture_id</text><text class="rel-t" x="340" y="486">home_team_id, away_team_id</text>
+        <g id="ents"></g>
+      </svg>
+    </div>
+    <aside class="detail" id="detail" aria-live="polite"></aside>
+  </div>
+  <div class="also" id="also"></div>
+  <h3 class="sub">How the tables join</h3>
+  <div class="tbl"><table><thead><tr><th>From</th><th>To</th><th>Meaning</th></tr></thead><tbody>
+    <tr><td class="m">fct_player_gameweek.player_id</td><td class="m">dim_players.player_id</td><td class="s">Which player the row describes.</td></tr>
+    <tr><td class="m">fct_player_gameweek.team_id</td><td class="m">dim_teams.team_id</td><td class="s">The player's team.</td></tr>
+    <tr><td class="m">fct_player_gameweek.fixture_id</td><td class="m">fct_fixtures.fixture_id</td><td class="s">The match the stats came from.</td></tr>
+    <tr><td class="m">fct_player_gameweek.gameweek_key</td><td class="m">dim_gameweeks.gameweek_key</td><td class="s">Season and gameweek, for example 2026-27-5. Checked by a custom test.</td></tr>
+    <tr><td class="m">dim_players.team_id</td><td class="m">dim_teams.team_id</td><td class="s">The team the player belongs to this season.</td></tr>
+    <tr><td class="m">fct_fixtures.home_team_id, away_team_id</td><td class="m">dim_teams.team_id</td><td class="s">Both sides of the match.</td></tr>
+  </tbody></table></div>
+</div></section>
+
+<!-- METADATA -->
+<section data-view="metadata"><div class="wrap pad">
+  <div class="eyebrow">Metadata</div>
+  <h2>About data</h2>
+  <p class="sec-lede">What each table is, where it comes from, who owns it and what is checked on it. Everything here is read from the repository's YAML and SQL files.</p>
+  <h3 class="sub">Data product</h3>
+  <div class="meta2" id="pmd"></div>
+  <h3 class="sub">Table registry</h3>
+  <p class="sec-lede">All 27 tables and views, from Bronze to Gold. Search by name or description, or filter by layer.</p>
+  <div class="cat" style="margin-top:20px">
+    <div class="cat-tools" style="border-top:0"><input id="mq" type="search" placeholder="Search the registry" aria-label="Search the registry">
+      <div class="seg" role="group" aria-label="Filter by layer"><button type="button" data-l="all" aria-pressed="true">All</button><button type="button" data-l="bronze" aria-pressed="false">Bronze</button><button type="button" data-l="silver" aria-pressed="false">Silver</button><button type="button" data-l="gold" aria-pressed="false">Gold</button></div></div>
+    <div class="tbl" style="margin:0;border:0;border-radius:0"><table style="min-width:900px"><thead><tr><th>Name</th><th>Layer</th><th>Built from</th><th>Feeds</th><th>Tests</th><th>Contract</th><th>Description</th></tr></thead><tbody id="mrows"></tbody></table></div>
+    <div class="empty" id="mempty">Nothing matches that search.</div>
+  </div>
+  <h3 class="sub">Where the metadata comes from</h3>
+  <div class="tbl"><table><thead><tr><th>File</th><th>Holds</th></tr></thead><tbody>
+    <tr><td class="m">data_products/player_performance.yml</td><td class="s">Product name, version, owner, grain, metrics, limits, access, freshness promise.</td></tr>
+    <tr><td class="m">models/marts/_marts.yml</td><td class="s">Gold column names, types, descriptions, tests and contracts.</td></tr>
+    <tr><td class="m">models/marts/_semantic.yml</td><td class="s">Semantic models, dimensions, measures and metrics.</td></tr>
+    <tr><td class="m">models/staging/_staging.yml</td><td class="s">Silver descriptions and tests.</td></tr>
+    <tr><td class="m">models/staging/_sources.yml</td><td class="s">Bronze tables, row counts and freshness rules.</td></tr>
+    <tr><td class="m">models/**/*.sql</td><td class="s">Dependencies between tables, read from the ref() and source() calls.</td></tr>
+    <tr><td class="m">raw/_manifests (bucket)</td><td class="s">Per-batch row counts, written by the extractor. Not yet shown on this site.</td></tr>
+  </tbody></table></div>
+</div></section>
+
+<!-- QUALITY -->
+<section data-view="quality"><div class="wrap pad">
+  <div class="eyebrow">Data quality</div>
+  <h2>What is checked</h2>
+  <p class="sec-lede">The tests and contracts below are the ones the project defines. They have been run by hand, not by a schedule.</p>
+  <div class="tiles" id="qtiles"></div>
+  <h3 class="sub">Contracts</h3>
+  <div class="two" id="contracts"></div>
+  <h3 class="sub">Gold tests</h3>
+  <p class="sec-lede">Tests on the Player Performance tables. <code>warn</code> means the test reports a problem without failing the run.</p>
+  <div class="tbl"><table><thead><tr><th>Model</th><th>Tests</th></tr></thead><tbody id="goldtests"></tbody></table></div>
+  <h3 class="sub">Silver tests</h3>
+  <p class="sec-lede">Tests on the staging views that feed the product.</p>
+  <div class="tbl"><table><thead><tr><th>Model</th><th>Tests</th></tr></thead><tbody id="silvertests"></tbody></table></div>
+  <h3 class="sub">Freshness</h3>
+  <div class="two" id="fresh"></div>
+</div></section>
+
+<!-- METRICS -->
+<section data-view="metrics"><div class="wrap pad">
+  <div class="eyebrow">Metrics</div>
+  <h2>Defined once, checked against SQL</h2>
+  <p class="sec-lede">Six metrics are defined in the dbt semantic layer. Each was compared with independent SQL on <code>gold.fct_player_gameweek</code> on 2026-11-04, overall and by gameweek, and matched exactly.</p>
+  <div class="grid" id="metrics"></div>
+  <p class="note" id="mscope"></p>
+  <h3 class="sub">Measures</h3>
+  <p class="sec-lede">A measure is a raw aggregation over one column or expression. Metrics are built from measures.</p>
+  <div class="tbl"><table><thead><tr><th>Measure</th><th>Aggregation</th><th>Expression</th><th>Description</th></tr></thead><tbody id="measures"></tbody></table></div>
+  <h3 class="sub">Semantic models</h3>
+  <p class="sec-lede">Metrics are queried with MetricFlow (<code>mf query</code>), which is free. The paid dbt Semantic Layer API is not used.</p>
+  <div class="grid" id="semantic"></div>
+</div></section>
+
+<!-- CATALOG -->
+<section data-view="catalog"><div class="wrap pad">
+  <div class="eyebrow">Data catalog</div>
+  <h2>Player Performance</h2>
+  <p class="sec-lede" id="pdesc"></p>
+  <div class="cat">
+    <div class="cat-head"><h3 id="pname"></h3><div class="meta" id="pmeta"></div></div>
+    <div class="cat-body" id="pbody"></div>
+    <div class="cat-tools"><input id="q" type="search" placeholder="Search tables and dimensions" aria-label="Search the product"></div>
+    <div class="tbl" style="margin:0;border:0;border-radius:0"><table><thead><tr><th>Table</th><th>Columns</th><th>What it holds</th></tr></thead><tbody id="ptables"></tbody></table></div>
+    <div class="empty" id="pempty">Nothing matches that search.</div>
+  </div>
+  <h3 class="sub">Dimensions you can slice by</h3>
+  <div class="tbl"><table><thead><tr><th>Name</th><th>Meaning</th></tr></thead><tbody id="pdims"></tbody></table></div>
+  <h3 class="sub">Known limitations</h3>
+  <div class="box" style="margin-top:20px"><ul id="plimits"></ul></div>
+  <h3 class="sub">Access</h3>
+  <div class="two" id="paccess"></div>
+  <h3 class="sub">Example queries</h3>
+  <p class="sec-lede" id="ploc"></p>
+  <div id="pq"></div>
+</div></section>
+</main>
+
+<footer><div class="wrap"><span>Pitchside Data Platform · generated from the repository</span><span>Postgres · Cloud Storage · BigQuery · dbt Core · MetricFlow</span></div></footer>
+
+<script>
+var D = {"gold": [{"name": "dim_teams", "kind": "dimension", "desc": "Teams, one row per team per season.", "contract": true, "inProduct": true, "cols": [{"name": "team_id", "type": "int64", "desc": "Primary key.", "tests": ["unique", "not_null"]}, {"name": "fpl_team_id", "type": "int64", "desc": "The team's id in the football API.", "tests": []}, {"name": "season", "type": "string", "desc": "Season label such as 2026-27.", "tests": []}, {"name": "team_name", "type": "string", "desc": "Full team name.", "tests": []}, {"name": "team_short_name", "type": "string", "desc": "Three-letter team code.", "tests": []}, {"name": "strength_overall_home", "type": "int64", "desc": "Overall strength rating when playing at home.", "tests": []}, {"name": "strength_overall_away", "type": "int64", "desc": "Overall strength rating when playing away.", "tests": []}, {"name": "strength_attack_home", "type": "int64", "desc": "Attack strength rating at home.", "tests": []}, {"name": "strength_attack_away", "type": "int64", "desc": "Attack strength rating away.", "tests": []}, {"name": "strength_defence_home", "type": "int64", "desc": "Defence strength rating at home.", "tests": []}, {"name": "strength_defence_away", "type": "int64", "desc": "Defence strength rating away.", "tests": []}], "deps": ["stg_teams"]}, {"name": "dim_players", "kind": "dimension", "desc": "Players, one row per player per season, with the team name attached.", "contract": true, "inProduct": true, "cols": [{"name": "player_id", "type": "int64", "desc": "Primary key.", "tests": ["unique", "not_null"]}, {"name": "fpl_player_id", "type": "int64", "desc": "The player's id in the football API.", "tests": []}, {"name": "season", "type": "string", "desc": "Season label such as 2026-27.", "tests": []}, {"name": "player_name", "type": "string", "desc": "Full player name.", "tests": []}, {"name": "web_name", "type": "string", "desc": "Short display name.", "tests": []}, {"name": "player_position", "type": "string", "desc": "GK, DEF, MID or FWD.", "tests": []}, {"name": "team_id", "type": "int64", "desc": "The player's team.", "tests": []}, {"name": "team_name", "type": "string", "desc": "Full name of the player's team.", "tests": []}, {"name": "team_short_name", "type": "string", "desc": "Three-letter code of the player's team.", "tests": []}, {"name": "start_price_millions", "type": "float64", "desc": "Price at the start of the season, in millions. Changing this to NUMERIC would be a breaking change.", "tests": []}, {"name": "availability_status", "type": "string", "desc": "Availability flag from the football API (for example available or injured).", "tests": []}], "deps": ["dim_teams", "stg_players"]}, {"name": "dim_gameweeks", "kind": "dimension", "desc": "One row per season and gameweek. The list of gameweeks comes from the fixtures, so gameweeks that have not been scored yet are included. Start and end are the earliest and latest kick-off in that gameweek. scored_at and is_scored come from Pitchside's own scoring (the source table is public.gameweeks). They show when the app's scoring ran for the gameweek, which is not necessarily the same as the real matches being finished. To be confirmed with the app code. Use is_finished for whether the matches are over.", "contract": true, "inProduct": true, "cols": [{"name": "gameweek_key", "type": "string", "desc": "Season and gameweek joined together, for example 2026-27-5. Matches stg_gameweeks.", "tests": ["unique", "not_null"]}, {"name": "season", "type": "string", "desc": "Season label such as 2026-27.", "tests": ["not_null"]}, {"name": "gameweek", "type": "int64", "desc": "Gameweek number.", "tests": ["not_null"]}, {"name": "rules_version", "type": "int64", "desc": "Version of the scoring rules that applied to this gameweek. Empty if no rules version has started yet.", "tests": []}, {"name": "gameweek_start", "type": "timestamp", "desc": "Kick-off time of the first fixture in the gameweek.", "tests": []}, {"name": "gameweek_end", "type": "timestamp", "desc": "Kick-off time of the last fixture in the gameweek.", "tests": []}, {"name": "fixture_count", "type": "int64", "desc": "Number of fixtures in the gameweek.", "tests": []}, {"name": "is_finished", "type": "bool", "desc": "True when the gameweek has at least one fixture and every fixture is finished. A fixture with an unknown finished flag counts as not finished.", "tests": []}, {"name": "scored_at", "type": "timestamp", "desc": "When Pitchside's own scoring ran for this gameweek (source table public.gameweeks). Not necessarily when the real matches finished. To be confirmed with the app code. Empty if scoring has not run.", "tests": []}, {"name": "is_scored", "type": "bool", "desc": "True if scored_at is not empty, meaning Pitchside's scoring has run for this gameweek. Not necessarily the same as the matches being finished. To be confirmed with the app code.", "tests": []}], "deps": ["stg_fixtures", "stg_gameweeks", "stg_ruleset_epochs"]}, {"name": "fct_fixtures", "kind": "fact", "desc": "Fixtures with team names and the match result.", "contract": false, "inProduct": false, "cols": [{"name": "fixture_id", "type": "", "desc": "Primary key.", "tests": ["unique", "not_null"]}, {"name": "season", "type": "", "desc": "", "tests": []}, {"name": "gameweek", "type": "", "desc": "", "tests": []}, {"name": "kickoff_time", "type": "", "desc": "", "tests": []}, {"name": "home_team_id", "type": "", "desc": "", "tests": []}, {"name": "home_team", "type": "", "desc": "", "tests": []}, {"name": "away_team_id", "type": "", "desc": "", "tests": []}, {"name": "away_team", "type": "", "desc": "", "tests": []}, {"name": "home_score", "type": "", "desc": "", "tests": []}, {"name": "away_score", "type": "", "desc": "", "tests": []}, {"name": "is_finished", "type": "", "desc": "", "tests": []}, {"name": "result", "type": "", "desc": "home_win, away_win or draw. Empty until the fixture is finished.", "tests": ["accepted_values"]}], "deps": ["dim_teams", "stg_fixtures"]}, {"name": "fct_player_gameweek", "kind": "fact", "desc": "One row per player per fixture with match statistics, opponent and points. gameweek_key (season and gameweek, for example 2026-27-5) matches dim_gameweeks. kickoff_time is the fixture's kick-off and can be empty for postponed fixtures.", "contract": true, "inProduct": true, "cols": [{"name": "player_gw_stat_id", "type": "int64", "desc": "Primary key.", "tests": ["unique", "not_null"]}, {"name": "player_id", "type": "int64", "desc": "The player.", "tests": []}, {"name": "player_name", "type": "string", "desc": "Full player name.", "tests": []}, {"name": "player_position", "type": "string", "desc": "GK, DEF, MID or FWD.", "tests": []}, {"name": "team_id", "type": "int64", "desc": "The player's team.", "tests": []}, {"name": "team_name", "type": "string", "desc": "Full name of the player's team.", "tests": []}, {"name": "season", "type": "string", "desc": "Season label such as 2026-27.", "tests": []}, {"name": "gameweek", "type": "int64", "desc": "Gameweek number.", "tests": []}, {"name": "gameweek_key", "type": "string", "desc": "Season and gameweek joined together, for example 2026-27-5. Matches dim_gameweeks.", "tests": []}, {"name": "fixture_id", "type": "int64", "desc": "The fixture the row belongs to.", "tests": []}, {"name": "kickoff_time", "type": "timestamp", "desc": "Kick-off of the fixture. Can be empty for postponed fixtures.", "tests": []}, {"name": "was_home", "type": "bool", "desc": "True if the player's team played at home.", "tests": []}, {"name": "opponent", "type": "string", "desc": "The team played against.", "tests": []}, {"name": "minutes", "type": "int64", "desc": "Minutes the player was on the pitch.", "tests": []}, {"name": "goals_scored", "type": "int64", "desc": "Goals scored.", "tests": []}, {"name": "assists", "type": "int64", "desc": "Assists.", "tests": []}, {"name": "clean_sheets", "type": "int64", "desc": "1 if the player's team conceded no goals while they played.", "tests": []}, {"name": "goals_conceded", "type": "int64", "desc": "Goals conceded while the player was on the pitch.", "tests": []}, {"name": "saves", "type": "int64", "desc": "Saves made (goalkeepers).", "tests": []}, {"name": "bonus", "type": "int64", "desc": "Bonus points awarded (0 to 3).", "tests": []}, {"name": "bps", "type": "int64", "desc": "Bonus points system score used to decide the bonus.", "tests": []}, {"name": "yellow_cards", "type": "int64", "desc": "Yellow cards.", "tests": []}, {"name": "red_cards", "type": "int64", "desc": "Red cards.", "tests": []}, {"name": "expected_goals", "type": "numeric(38,9)", "desc": "Expected goals (xG). Empty if missing, never replaced by 0.", "tests": []}, {"name": "expected_assists", "type": "numeric(38,9)", "desc": "Expected assists (xA). Empty if missing, never replaced by 0.", "tests": []}, {"name": "price_millions", "type": "float64", "desc": "Player price at the time, in millions. Changing this to NUMERIC would be a breaking change.", "tests": []}, {"name": "total_points", "type": "int64", "desc": "Fantasy points the player scored.", "tests": []}], "deps": ["dim_players", "fct_fixtures", "stg_player_gw_stats"]}, {"name": "player_form", "kind": "derived", "desc": "Points per player per gameweek with a rolling three-gameweek average.", "contract": false, "inProduct": false, "cols": [{"name": "player_id", "type": "", "desc": "", "tests": ["not_null"]}, {"name": "player_name", "type": "", "desc": "", "tests": []}, {"name": "player_position", "type": "", "desc": "", "tests": []}, {"name": "season", "type": "", "desc": "", "tests": []}, {"name": "gameweek", "type": "", "desc": "", "tests": []}, {"name": "points", "type": "", "desc": "", "tests": []}, {"name": "minutes", "type": "", "desc": "", "tests": []}, {"name": "points_rolling_3", "type": "", "desc": "Average points over this and the previous two gameweeks.", "tests": []}], "deps": ["fct_player_gameweek"]}, {"name": "fct_prediction_vs_actual", "kind": "derived", "desc": "Model predictions compared with the points players actually scored.", "contract": false, "inProduct": false, "cols": [{"name": "prediction_id", "type": "", "desc": "Primary key.", "tests": ["unique", "not_null"]}, {"name": "player_id", "type": "", "desc": "", "tests": []}, {"name": "player_name", "type": "", "desc": "", "tests": []}, {"name": "player_position", "type": "", "desc": "", "tests": []}, {"name": "season", "type": "", "desc": "", "tests": []}, {"name": "gameweek", "type": "", "desc": "", "tests": []}, {"name": "model_version", "type": "", "desc": "", "tests": []}, {"name": "tier_or_label", "type": "", "desc": "", "tests": []}, {"name": "predicted_points", "type": "", "desc": "", "tests": []}, {"name": "actual_points", "type": "", "desc": "", "tests": []}, {"name": "absolute_error", "type": "", "desc": "Absolute difference between predicted and actual points.", "tests": ["not_null"]}], "deps": ["dim_players", "fct_player_gameweek", "stg_ml_predictions"]}], "silver": [{"name": "stg_teams", "desc": "One row per team per season, with readable column names and the FPL strength ratings.", "deps": ["ml_teams"], "tests": 2}, {"name": "stg_players", "desc": "One row per player per season. Prices are converted from tenths of a million to millions (55 becomes 5.5).", "deps": ["ml_players"], "tests": 8}, {"name": "stg_fixtures", "desc": "One row per fixture, with kick-off time, score and whether it has started or finished.", "deps": ["ml_fixtures"], "tests": 6}, {"name": "stg_player_gw_stats", "desc": "One row per player per fixture, with match statistics and points. Decimal stats (influence, creativity, threat, ict_index and the expected_* columns) are real numbers here. Missing values stay NULL: influence is NULL for the live gameweek that is not populated yet.", "deps": ["ml_player_gw_stats"], "tests": 10}, {"name": "stg_ml_predictions", "desc": "Model predictions, one row per player per gameweek per model version. FROZEN: only gameweeks 5 and 6 (model xgboost_v1) exist, last written 2026-09-22. Do not expect new rows until predictions are running again.", "deps": ["ml_ml_predictions"], "tests": 6}, {"name": "stg_season_stats", "desc": "Season-level stats per player and data source. The table is empty today, so this model returns no rows.", "deps": ["ml_season_stats"], "tests": 3}, {"name": "stg_player_gw_features", "desc": "Rolling-form features per player per gameweek, built for the prediction model. The table is empty today, so this model returns no rows. Rolling averages are real numbers here.", "deps": ["ml_player_gw_features"], "tests": 4}, {"name": "stg_fixture_poll_schedule", "desc": "One row per fixture showing when the app planned to check the match for half-time and full-time results and when it actually did.", "deps": ["ml_fixture_poll_schedule"], "tests": 3}, {"name": "stg_gameweeks", "desc": "One row per gameweek that has been scored. The source has no id, so gameweek_key is built from season and gameweek.", "deps": ["public_gameweeks"], "tests": 3}, {"name": "stg_ruleset_epochs", "desc": "Which version of the scoring rules applies from which gameweek. The source has no id, so ruleset_epoch_key is built from season and rules version.", "deps": ["public_ruleset_epochs"], "tests": 3}], "bronze": [{"name": "ml_players", "desc": "One row per player per season (670 rows)."}, {"name": "ml_teams", "desc": "One row per team per season (20 rows)."}, {"name": "ml_fixtures", "desc": "One row per fixture (380 rows)."}, {"name": "ml_player_gw_stats", "desc": "One row per player per fixture with match stats and points (5882 rows). Numeric stats are STRING. 659 rows have NULL influence because the live gameweek is not populated yet."}, {"name": "ml_season_stats", "desc": "Season-level player stats. Empty for now (0 rows)."}, {"name": "ml_player_gw_features", "desc": "Rolling-form features per player per gameweek. Empty for now (0 rows)."}, {"name": "ml_ml_predictions", "desc": "Model predictions (1318 rows). FROZEN: only gameweeks 5 and 6 from xgboost_v1, last written 2026-09-22. It is exempt from the freshness error."}, {"name": "ml_fixture_poll_schedule", "desc": "When the app polls each fixture for half-time and full-time results (344 rows)."}, {"name": "public_gameweeks", "desc": "One row per gameweek that has been scored (4 rows)."}, {"name": "public_ruleset_epochs", "desc": "Which scoring rules version applies from which gameweek (1 row)."}], "semantic": [{"name": "player_gameweek", "desc": "One row per player per fixture with match statistics and fantasy points.", "model": "fct_player_gameweek", "entities": ["player_gw_stat (primary)", "player (foreign)", "team (foreign)", "fixture (foreign)", "gameweek (foreign)"], "dimensions": ["kickoff_date", "season", "gameweek_number", "player_name", "player_position", "team_name", "opponent", "was_home"], "measures": ["points_sum", "minutes_sum", "goal_involvements_sum", "player_gameweeks_count"], "measureDetails": [{"name": "points_sum", "desc": "Sum of fantasy points.", "agg": "sum", "expr": "total_points", "usedBy": ["average_points_per_player_gameweek", "points_per_90", "total_fantasy_points"]}, {"name": "minutes_sum", "desc": "Sum of minutes played.", "agg": "sum", "expr": "minutes", "usedBy": ["points_per_90", "total_minutes"]}, {"name": "goal_involvements_sum", "desc": "Sum of goals plus assists.", "agg": "sum", "expr": "goals_scored + assists", "usedBy": ["goal_involvements"]}, {"name": "player_gameweeks_count", "desc": "Number of distinct player and gameweek combinations.", "agg": "count_distinct", "expr": "concat(cast(player_id as string), '-', gameweek_key)", "usedBy": ["average_points_per_player_gameweek", "player_gameweeks"]}]}, {"name": "players", "desc": "One row per player per season.", "model": "dim_players", "entities": ["player (primary)", "team (foreign)"], "dimensions": ["player_name", "web_name", "player_position", "season", "availability_status"], "measures": [], "measureDetails": []}, {"name": "teams", "desc": "One row per team per season.", "model": "dim_teams", "entities": ["team (primary)"], "dimensions": ["team_name", "team_short_name", "season"], "measures": [], "measureDetails": []}, {"name": "gameweeks", "desc": "One row per season and gameweek.", "model": "dim_gameweeks", "entities": ["gameweek (primary)"], "dimensions": ["season", "gameweek_number", "rules_version", "is_scored", "is_finished", "gameweek_start"], "measures": [], "measureDetails": []}], "metrics": [{"name": "total_fantasy_points", "label": "Total fantasy points", "type": "simple", "desc": "Sum of fantasy points scored.", "value": "8218", "verification": "verified"}, {"name": "total_minutes", "label": "Total minutes", "type": "simple", "desc": "Sum of minutes played.", "value": "176940", "verification": "verified"}, {"name": "goal_involvements", "label": "Goal involvements", "type": "simple", "desc": "Goals plus assists.", "value": "450", "verification": "verified"}, {"name": "player_gameweeks", "label": "Player gameweeks", "type": "simple", "desc": "Number of distinct player and gameweek combinations (a double gameweek counts once).", "value": "5882", "verification": "verified"}, {"name": "average_points_per_player_gameweek", "label": "Average points per player gameweek", "type": "ratio", "desc": "Total fantasy points divided by player gameweeks.", "value": "1.39714", "verification": "verified"}, {"name": "points_per_90", "label": "Points per 90 minutes", "type": "derived", "desc": "Fantasy points per 90 minutes played. Empty when no minutes were played.", "value": "4.18006", "verification": "verified"}], "product": {"name": "player_performance", "title": "Player Performance", "version": "1.0.0", "owner": "Football Analytics", "status": "draft", "domain": "Football analytics", "description": "Match-by-match performance of fantasy football players: minutes, goals, assists, fantasy points and price, with the team, opponent, gameweek and scoring-rules version. Built from Pitchside's own database, not from a public feed.", "grain": "One row per player per fixture (fct_player_gameweek, primary key player_gw_stat_id).", "grainNotes": "A player with a double gameweek has two rows in that gameweek. Metrics that say \"per player gameweek\" count a player once per gameweek.", "tables": [{"name": "fct_player_gameweek", "description": "One row per player per fixture with match statistics, opponent and points."}, {"name": "dim_players", "description": "One row per player per season, with the team name attached."}, {"name": "dim_teams", "description": "One row per team per season."}, {"name": "dim_gameweeks", "description": "One row per season and gameweek, with start, end, fixture count, rules version and Pitchside scoring status."}], "dimensions": [{"name": "kickoff_date", "description": "Date of the fixture. Can be empty for postponed fixtures."}, {"name": "season", "description": "Season label such as 2026-27."}, {"name": "gameweek_number", "description": "Gameweek number within the season."}, {"name": "player_name", "description": "Player's full name."}, {"name": "player_position", "description": "GK, DEF, MID or FWD."}, {"name": "team_name", "description": "The player's team."}, {"name": "opponent", "description": "The team played against."}, {"name": "was_home", "description": "True if the player's team played at home."}, {"name": "rules_version", "description": "Version of the scoring rules that applied (from dim_gameweeks)."}, {"name": "is_finished", "description": "True when every fixture in the gameweek is finished (from dim_gameweeks)."}, {"name": "is_scored", "description": "True when Pitchside's own scoring has run for the gameweek (from dim_gameweeks). See known_limitations."}], "freshness": {"expectation": "Refreshed daily. The product is stale if its data is older than 36 hours.", "current": "The schedule is not automated yet (as of 2026-11-04). Refreshing means someone runs the extractor, the Bronze loader and dbt by hand, so the expectation above is a target, not something that is currently enforced.", "design": "Extractor at 06:00 UTC, then the Bronze loader, then dbt."}, "quality": {"status": "Passed at last run 2026-11-03 (49 silver, 13 marts, 5 dim_gameweeks; 67 tests in the whole project). Not run automatically.", "gold": {"dim_gameweeks": ["not_null(gameweek)", "not_null(gameweek_key)", "unique(gameweek_key)", "not_null(season)"], "dim_players": ["not_null(player_id)", "unique(player_id)"], "dim_teams": ["not_null(team_id)", "unique(team_id)"], "fct_player_gameweek": ["not_null(player_gw_stat_id)", "unique(player_gw_stat_id)"], "singular": ["assert_player_gameweek_in_dim_gameweeks"]}, "silver": {"stg_fixtures": ["relationships(away_team_id)", "relationships(home_team_id)", "not_null(fixture_id)", "unique(fixture_id)", "accepted_range(gameweek) (warn)", "matches_pattern(season) (warn)"], "stg_gameweeks": ["accepted_range(gameweek) (warn)", "not_null(gameweek_key)", "unique(gameweek_key)"], "stg_player_gw_stats": ["relationships(fixture_id)", "relationships(player_id)", "not_null(player_gw_stat_id)", "unique(player_gw_stat_id)", "not_null(player_id)", "not_null(total_points)", "accepted_range(gameweek) (warn)", "accepted_range(minutes) (warn)", "accepted_range(price_millions) (warn)", "matches_pattern(season) (warn)"], "stg_players": ["not_null(player_id)", "unique(player_id)", "not_null(player_position)", "accepted_values(player_position)", "relationships(team_id)", "accepted_range(current_price_millions) (warn)", "accepted_range(start_price_millions) (warn)", "matches_pattern(season) (warn)"], "stg_ruleset_epochs": ["not_null(ruleset_epoch_key)", "unique(ruleset_epoch_key)", "accepted_range(first_gameweek) (warn)"], "stg_teams": ["not_null(team_id)", "unique(team_id)"], "singular": ["assert_gameweek_has_enough_rows (warn)"]}}, "contract": {"since": "2026-11-04", "fixes": "The column names and BigQuery data types of these four tables. A missing, extra or retyped column fails the dbt build.", "breaking": "Any change to the columns or types is a breaking change that needs a version bump, including moving the price columns from FLOAT64 to NUMERIC.", "notCovered": ["fct_fixtures", "player_form", "fct_prediction_vs_actual", "metricflow_time_spine"]}, "access": {"class": "Internal analytical data", "personal": "None. The product holds player and team football statistics only.", "excluded": "Pitchside user accounts and everything linked to them (users, emails, password data, tokens, invite codes, error text) are not part of this product."}, "limits": ["Only season 2026-27 is present, and only gameweeks 1 to 9 have been played (as of 2026-11-03).", "Predictions are frozen at gameweeks 5 and 6 (last written 2026-09-22). They sit in fct_prediction_vs_actual, which is not part of this version of the product.", "On the 2 gameweeks that have predictions, the model predicted higher than actual by about 0.7 points on average. Computed from fct_prediction_vs_actual on 2026-11-03 (gameweek 5: predicted 2.18, actual 1.45; gameweek 6: predicted 2.11, actual 1.36). It covers 2 gameweeks only and is context, not a guarantee.", "scored_at and is_scored in dim_gameweeks mean Pitchside's own scoring ran for the gameweek (source table public.gameweeks). They do not mean the real matches have finished. Use is_finished for that. To be confirmed with the app code.", "kickoff_time can be empty for postponed fixtures, so those rows have no kickoff_date and drop out of time-based queries.", "All six metrics were checked against SQL on 2026-11-04, but only overall and by gameweek. Grouping by player, position, team or opponent has not been checked yet.", "Data is a full daily snapshot, so it shows the latest state, not history."], "scope": {"verified_groupings": ["overall", "by gameweek"], "not_yet_checked_groupings": ["player", "position", "team", "opponent"], "note": "Grouping by player, position, team or opponent has not been checked against SQL yet."}, "queries": [{"name": "Total points and average points per player gameweek, by gameweek", "sql": "select\n  gameweek,\n  sum(total_points) as total_fantasy_points,\n  safe_divide(\n    sum(total_points),\n    count(distinct concat(cast(player_id as string), '-', gameweek_key))\n  ) as average_points_per_player_gameweek\nfrom `your-gcp-project.gold.fct_player_gameweek`\nwhere season = '2026-27'\ngroup by gameweek\norder by gameweek"}, {"name": "Points per 90 minutes, with the zero-minutes guard", "sql": "select\n  player_id,\n  player_name,\n  player_position,\n  team_name,\n  sum(minutes) as total_minutes,\n  sum(total_points) as total_fantasy_points,\n  case\n    when sum(minutes) = 0 then null\n    else sum(total_points) * 90.0 / sum(minutes)\n  end as points_per_90\nfrom `your-gcp-project.gold.fct_player_gameweek`\nwhere season = '2026-27'\ngroup by player_id, player_name, player_position, team_name\nhaving sum(minutes) >= 270\norder by points_per_90 desc\nlimit 10"}, {"name": "Gameweek status, fixtures and rules version", "sql": "select\n  gameweek,\n  fixture_count,\n  is_finished,\n  is_scored,\n  rules_version,\n  gameweek_start,\n  gameweek_end\nfrom `your-gcp-project.gold.dim_gameweeks`\nwhere season = '2026-27'\norder by gameweek"}], "location": "BigQuery project your-gcp-project, dataset gold"}};
+(function () {
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function $(id) { return document.getElementById(id); }
+  var P = D.product;
+  var G = {}; D.gold.forEach(function (g) { G[g.name] = g; });
+  var goldCols = D.gold.reduce(function (a, g) { return a + g.cols.length; }, 0);
+
+  /* routing */
+  var views = [].slice.call(document.querySelectorAll("[data-view]")), links = [].slice.call(document.querySelectorAll("#tabs a"));
+  var names = views.map(function (v) { return v.getAttribute("data-view"); });
+  function show() {
+    var h = (location.hash || "").replace("#", ""); if (names.indexOf(h) === -1) h = "overview";
+    views.forEach(function (v) { v.classList.toggle("on", v.getAttribute("data-view") === h); });
+    links.forEach(function (a) { if (a.getAttribute("href") === "#" + h) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });
+    window.scrollTo(0, 0);
+  }
+  window.addEventListener("hashchange", show);
+
+  /* overview */
+  var silverTests = D.silver.reduce(function (a, s) { return a + s.tests; }, 0);
+  $("facts").innerHTML = [
+    ["source tables", "10", "from one Postgres database"], ["player rows", "5,882", "one per player per fixture"],
+    ["dbt tests", "67", "passed at last run"], ["contracted tables", "4", "enforced column types"], ["metrics", "6", "verified against SQL"]
+  ].map(function (f) { return "<li><span>" + f[0] + "</span><b>" + f[1] + "</b><small>" + f[2] + "</small></li>"; }).join("");
+  var L = [["lake", "10", "tables", "dated Parquet, kept", "var(--t4)"], ["bronze", "10", "tables", "as extracted, tagged", "var(--t3)"],
+    ["silver", "10", "views", "cleaned, typed, named", "var(--t2)"], ["gold", "7", "tables", "dimensions, facts, form", "var(--t1)"], ["semantic", "6", "metrics", "defined once, in dbt", "var(--t1)"]];
+  $("layers").innerHTML = L.map(function (l, i) { return (i ? "<span class=\"gate\">›</span>" : "") + "<div class=\"layer\" style=\"--c:" + l[4] + "\"><code>" + l[0] + "</code><b>" + l[1] + " <small>" + l[2] + "</small></b><p>" + l[3] + "</p></div>"; }).join("");
+  var ic = {
+    arch: "<rect x=\"3\" y=\"4\" width=\"7\" height=\"6\" rx=\"1\"/><rect x=\"14\" y=\"4\" width=\"7\" height=\"6\" rx=\"1\"/><rect x=\"8.5\" y=\"15\" width=\"7\" height=\"5\" rx=\"1\"/><path d=\"M6.5 10v2.5h11V10M12 12.5V15\"/>",
+    lin: "<circle cx=\"5\" cy=\"6\" r=\"2\"/><circle cx=\"5\" cy=\"18\" r=\"2\"/><circle cx=\"19\" cy=\"12\" r=\"2\"/><path d=\"M7 6h4a3 3 0 013 3M7 18h4a3 3 0 003-3M14 9l3 2M14 15l3-2\"/>",
+    shield: "<path d=\"M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z\"/><path d=\"M9 12l2 2 4-4\"/>",
+    bars: "<path d=\"M4 19V9M10 19V5M16 19v-7M22 19H2\"/>", search: "<circle cx=\"11\" cy=\"11\" r=\"6.5\"/><path d=\"M20 20l-4.2-4.2\"/>",
+    flow: "<path d=\"M4 6h6v4H4zM14 14h6v4h-6zM10 8h2a2 2 0 012 2v4\"/>" };
+  var tools = [["architecture", "arch", "Architecture", "The path from the app database to the marketplace, the security model and the decisions behind it."],
+    ["lineage", "lin", "Data lineage", "An interactive graph of all 27 tables and views and what feeds each one."],
+    ["data-model", "arch", "Data model", "The star around player performance, with every column, type and test."],
+    ["metadata", "search", "Metadata", "A registry of every table and view with its layer, dependencies, tests and contract, plus the product details."],
+    ["quality", "shield", "Data quality", "Tests, contracts and freshness rules, listed by model."],
+    ["metrics", "bars", "Metrics", "Six verified metrics and the semantic models behind them."],
+    ["catalog", "search", "Data catalog", "The Player Performance data product: contract, limits, access and example queries."]];
+  $("toolkit").innerHTML = tools.map(function (t) { return "<a class=\"card\" href=\"#" + t[0] + "\"><div class=\"ico\"><svg viewBox=\"0 0 24 24\">" + ic[t[1]] + "</svg></div><h3>" + t[2] + "</h3><p>" + t[3] + "</p></a>"; }).join("");
+
+  /* architecture */
+  var hops = [
+    ["Football API", "Existing app", "Celery tasks in the app", "The app calls the football API on a schedule and saves fixtures, players, stats and predictions.", ["Celery Beat", "FastAPI"]],
+    ["Compute VM", "Postgres", "Source database", "The tasks write into Postgres on the VM. This is the only system the extractor reads.", ["Postgres 18", "ml schema", "public.gameweeks"]],
+    ["Compute VM", "extractor.py", "Extractor", "Reads Postgres, never the football API. Waits for the app's refresh tasks to report in, then takes one consistent snapshot.", ["06:00 UTC target", "heartbeat gate", "REPEATABLE READ", "manifest written last"]],
+    ["Cloud Storage", "GCS", "Data lake", "One Parquet file per table plus a manifest per batch. The manifest is written last, so its presence means the batch is complete.", ["raw/&lt;schema&gt;/&lt;table&gt;/dt=…", "raw/_manifests"]],
+    ["BigQuery · bronze", "bronze_loader.py", "Bronze", "A faithful copy of the source. Numeric columns stay as strings, and every table gets batch and load columns.", ["_batch_id", "_loaded_at", "_source_table"]],
+    ["BigQuery · silver", "dbt Core", "Silver", "Ten staging views that rename and cast. They read Bronze directly, so they are as fresh as the last load.", ["10 views", "freshness 36h warn / 72h error"]],
+    ["BigQuery · gold", "dbt Core", "Gold", "Seven tables: three dimensions, two facts and two derived tables, plus a time spine.", ["dim_teams", "dim_players", "dim_gameweeks", "fct_fixtures", "fct_player_gameweek", "player_form", "fct_prediction_vs_actual"]],
+    ["Semantic layer", "MetricFlow", "Metrics and data products", "Shared metric definitions, queried with mf. The data product contract describes what consumers can rely on.", ["4 semantic models", "6 metrics", "data_products/*.yml"]]];
+  $("hops").innerHTML = hops.map(function (h) { return "<div class=\"stage\"><div class=\"where\">" + h[0] + "</div><div><h3>" + h[2] + "</h3><p>" + h[3] + "</p></div><div class=\"tags\">" + h[4].map(function (t) { return "<code>" + t + "</code>"; }).join("") + "</div></div>"; }).join("");
+  var dec = [["Full daily snapshots instead of CDC", "Simple, and the tables are small.", "Repeats unchanged rows. No row-level history."],
+    ["Keyless impersonation", "The organisation blocks service account keys, and keys leak.", "Needs a wider VM access scope."],
+    ["Numeric columns as strings in Bronze", "Avoids precision and type drift.", "Silver must cast."],
+    ["Predictions frozen", "The backfill job is not installed.", "Prediction data is stale (gameweeks 5 and 6)."],
+    ["User-linked tables deferred", "Privacy needs a proper design first.", "Less data for now."],
+    ["dbt and marketplace off the VM", "The VM has about 1 GB of memory.", "They need another place to run."],
+    ["Enforced contracts on four Gold tables", "A missing, extra or retyped column fails the build.", "Any column or type change needs a version bump."],
+    ["Free MetricFlow instead of the paid API", "Metrics are queried locally with mf.", "No hosted API for BI tools."]];
+  $("decisions").innerHTML = dec.map(function (d) { return "<tr><td>" + d[0] + "</td><td class=\"s\">" + d[1] + "</td><td class=\"s\">" + d[2] + "</td></tr>"; }).join("");
+
+  /* lineage graph */
+  (function () {
+    var nodes = {}, order = [];
+    D.bronze.forEach(function (b) { nodes[b.name] = { name: b.name, layer: "bronze", desc: b.desc, deps: [], depth: 0 }; });
+    var sIdx = {};
+    D.silver.forEach(function (s) { nodes[s.name] = { name: s.name, layer: "silver", desc: s.desc, deps: s.deps, depth: 1 }; });
+    D.gold.forEach(function (g) { nodes[g.name] = { name: g.name, layer: "gold", desc: g.desc, deps: g.deps, depth: 0 }; });
+    function depth(n) { var x = nodes[n]; if (x.layer !== "gold") return x.depth; if (x.depth) return x.depth; var m = 1; x.deps.forEach(function (d) { m = Math.max(m, depth(d)); }); x.depth = m + 1; return x.depth; }
+    D.gold.forEach(function (g) { depth(g.name); });
+    var maxD = 0; Object.keys(nodes).forEach(function (k) { maxD = Math.max(maxD, nodes[k].depth); });
+    var cols = []; for (var i = 0; i <= maxD; i++) cols.push([]);
+    D.silver.forEach(function (s) { cols[1].push(s.name); });
+    cols[0] = D.silver.map(function (s) { return s.deps[0]; });
+    var pitch = 36, top = 44, bw = 184, cw = 232, ypos = {};
+    cols[0].forEach(function (n, i) { ypos[n] = top + i * pitch; }); cols[1].forEach(function (n, i) { ypos[n] = top + i * pitch; });
+    D.gold.forEach(function (g) { cols[nodes[g.name].depth].push(g.name); });
+    for (var c = 2; c <= maxD; c++) {
+      var arr = cols[c].map(function (n) { var ys = nodes[n].deps.map(function (d) { return ypos[d]; }); return { n: n, y: ys.reduce(function (a, b) { return a + b; }, 0) / ys.length }; }).sort(function (a, b) { return a.y - b.y; });
+      var last = -1e9; arr.forEach(function (o) { var y = Math.max(o.y, last + pitch); ypos[o.n] = y; last = y; });
+    }
+    var maxY = 0; Object.keys(ypos).forEach(function (k) { maxY = Math.max(maxY, ypos[k]); });
+    var W = 24 + (maxD + 1) * cw, H = maxY + pitch + 24;
+    var goldNames = ["gold · dimensions", "gold · players, fixtures", "gold · main fact", "gold · derived"]; var heads = ["bronze", "silver"]; for (var h2 = 2; h2 <= maxD; h2++) heads.push(goldNames[h2 - 2] || "gold");
+    var edges = [], parts = [];
+    Object.keys(nodes).forEach(function (k) { nodes[k].deps.forEach(function (d) { edges.push([d, k]); }); });
+    function px(n) { return 12 + nodes[n].depth * cw; }
+    var svg = "<svg width=\"" + W + "\" height=\"" + H + "\" viewBox=\"0 0 " + W + " " + H + "\" role=\"group\" aria-label=\"Lineage graph\">";
+    heads.forEach(function (t, i) { svg += "<text class=\"g-col\" x=\"" + (12 + i * cw) + "\" y=\"22\">" + t + "</text>"; });
+    edges.forEach(function (e, i) {
+      var x1 = px(e[0]) + bw, y1 = ypos[e[0]] + 14, x2 = px(e[1]), y2 = ypos[e[1]] + 14, mx = (x1 + x2) / 2;
+      svg += "<path class=\"g-edge\" data-e=\"" + i + "\" d=\"M" + x1 + " " + y1 + " C" + mx + " " + y1 + " " + mx + " " + y2 + " " + x2 + " " + y2 + "\"/>";
+    });
+    Object.keys(nodes).forEach(function (k) {
+      var n = nodes[k];
+      svg += "<g class=\"g-node l-" + n.layer + "\" data-n=\"" + k + "\" tabindex=\"0\" role=\"button\" aria-label=\"" + k + "\"><rect x=\"" + px(k) + "\" y=\"" + ypos[k] + "\" width=\"" + bw + "\" height=\"28\" rx=\"7\"/><text x=\"" + (px(k) + 10) + "\" y=\"" + (ypos[k] + 18) + "\">" + k + "</text></g>";
+    });
+    svg += "</svg>";
+    $("graph").innerHTML = svg;
+    var gEl = $("graph"), edgeEls = [].slice.call(gEl.querySelectorAll(".g-edge")), nodeEls = {};
+    [].slice.call(gEl.querySelectorAll(".g-node")).forEach(function (el) { nodeEls[el.getAttribute("data-n")] = el; });
+    function up(n, set) { nodes[n].deps.forEach(function (d) { if (!set[d]) { set[d] = 1; up(d, set); } }); }
+    function down(n, set) { edges.forEach(function (e) { if (e[0] === n && !set[e[1]]) { set[e[1]] = 1; down(e[1], set); } }); }
+    function pick(n) {
+      var u = {}, d = {}; up(n, u); down(n, d);
+      var rel = {}; Object.keys(u).concat(Object.keys(d)).forEach(function (k) { rel[k] = 1; });
+      gEl.classList.add("focus");
+      Object.keys(nodeEls).forEach(function (k) { nodeEls[k].classList.toggle("sel", k === n); nodeEls[k].classList.toggle("rel", !!rel[k] && k !== n); });
+      edgeEls.forEach(function (el, i) { var e = edges[i]; var inUp = (u[e[0]] || e[0] === n) && (u[e[1]] || e[1] === n); var inDn = (d[e[0]] || e[0] === n) && (d[e[1]] || e[1] === n); el.classList.toggle("hot", !!(inUp || inDn)); });
+      var gx = px(n) - 40; gEl.scrollLeft = Math.max(0, gx - (gEl.clientWidth - bw) / 2 + 40);
+      var x = nodes[n], upN = Object.keys(u), dnN = Object.keys(d);
+      function list(a) { return a.length ? "<div class=\"chips\">" + a.sort().map(function (z) { return "<code>" + z + "</code>"; }).join("") + "</div>" : "<span style=\"color:var(--slate)\">None</span>"; }
+      var extra = ""; if (x.layer === "gold" && G[n]) extra = " <span class=\"pill dim\">" + G[n].cols.length + " columns</span>" + (G[n].contract ? " <span class=\"pill\">contract</span>" : "");
+      $("ginfo").innerHTML = "<h3>" + n + "</h3><p><span class=\"pill\">" + x.layer + "</span>" + extra + "</p><p>" + esc(x.desc || "") + "</p>" +
+        "<div class=\"row\"><b>Upstream, everything it depends on (" + upN.length + ")</b>" + list(upN) + "</div><div class=\"row\"><b>Downstream, everything it feeds (" + dnN.length + ")</b>" + list(dnN) + "</div>";
+    }
+    Object.keys(nodeEls).forEach(function (k) {
+      nodeEls[k].addEventListener("click", function () { pick(k); });
+      nodeEls[k].addEventListener("keydown", function (ev) { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); pick(k); } });
+    });
+    pick("fct_player_gameweek");
+  })();
+
+  /* data model */
+  (function () {
+    var E = [
+      ["dim_players", 30, 30, 230, 120, "dimension", ["player_id  (key)", "team_id  → dim_teams"]],
+      ["dim_teams", 30, 330, 230, 120, "dimension", ["team_id  (key)", "team_name, strengths"]],
+      ["fct_player_gameweek", 365, 170, 230, 170, "fact", ["player_gw_stat_id  (key)", "player_id, team_id", "fixture_id, gameweek_key", "minutes, goals, points …"]],
+      ["dim_gameweeks", 700, 30, 230, 120, "dimension", ["gameweek_key  (key)", "season, gameweek"]],
+      ["fct_fixtures", 700, 330, 230, 120, "fact", ["fixture_id  (key)", "home_team_id, away_team_id"]]];
+    var s = "";
+    E.forEach(function (e) {
+      var g = G[e[0]], sub = e[5] + " · " + g.cols.length + " columns";
+      s += "<g class=\"ent " + (e[5] === "fact" && e[0] === "fct_player_gameweek" ? "fact" : "") + "\" data-t=\"" + e[0] + "\" tabindex=\"0\" role=\"button\" aria-label=\"" + e[0] + "\">" +
+        "<rect class=\"box\" x=\"" + e[1] + "\" y=\"" + e[2] + "\" width=\"" + e[3] + "\" height=\"" + e[4] + "\" rx=\"10\"/><rect class=\"head\" x=\"" + (e[1] + 1) + "\" y=\"" + (e[2] + 1) + "\" width=\"" + (e[3] - 2) + "\" height=\"34\" rx=\"9\"/>" +
+        "<text class=\"t\" x=\"" + (e[1] + 16) + "\" y=\"" + (e[2] + 23) + "\">" + e[0] + "</text><text class=\"s\" x=\"" + (e[1] + 16) + "\" y=\"" + (e[2] + 54) + "\">" + sub + "</text>";
+      e[6].forEach(function (l, i) { s += "<text class=\"k\" x=\"" + (e[1] + 16) + "\" y=\"" + (e[2] + 74 + i * 18) + "\">" + l + "</text>"; });
+      s += "</g>";
+    });
+    $("ents").innerHTML = s;
+    var ents = [].slice.call(document.querySelectorAll(".ent"));
+    var also = ["player_form", "fct_prediction_vs_actual"];
+    $("also").innerHTML = "<span>Also in Gold:</span>" + also.map(function (n) { return "<button type=\"button\" data-a=\"" + n + "\">" + n + "</button>"; }).join("") + "<span>and <code>metricflow_time_spine</code>, one row per day, plumbing for the semantic layer.</span>";
+    var abtn = [].slice.call(document.querySelectorAll("#also button"));
+    function pick(n) {
+      var t = G[n];
+      ents.forEach(function (e) { e.classList.toggle("sel", e.getAttribute("data-t") === n); });
+      abtn.forEach(function (b) { b.classList.toggle("on", b.getAttribute("data-a") === n); });
+      var hasTypes = t.cols.some(function (c) { return c.type; });
+      var rows = t.cols.map(function (c) {
+        var tt = c.tests.length ? "<div style=\"margin-top:4px\" class=\"chips\">" + c.tests.map(function (x) { return "<code>" + x + "</code>"; }).join("") + "</div>" : "";
+        return "<tr><td>" + c.name + "</td>" + (hasTypes ? "<td class=\"ty\">" + esc(c.type) + "</td>" : "") + "<td class=\"de\">" + esc(c.desc) + tt + "</td></tr>";
+      }).join("");
+      $("detail").innerHTML = "<h3>" + n + "</h3><div class=\"meta\"><span class=\"pill\">" + t.kind + "</span><span class=\"pill dim\">" + t.cols.length + " columns</span>" +
+        (t.contract ? "<span class=\"pill\">contract enforced</span>" : "<span class=\"pill dim\">no contract</span>") + "<span class=\"pill dim\">" + (t.inProduct ? "in Player Performance" : "not in the product") + "</span></div><p>" + esc(t.desc) + "</p>" +
+        "<div class=\"colt\"><table><tbody>" + rows + "</tbody></table></div>";
+    }
+    ents.forEach(function (e) { var n = e.getAttribute("data-t"); e.addEventListener("click", function () { pick(n); }); e.addEventListener("keydown", function (ev) { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); pick(n); } }); });
+    abtn.forEach(function (b) { b.addEventListener("click", function () { pick(b.getAttribute("data-a")); }); });
+    pick("fct_player_gameweek");
+  })();
+
+  /* quality */
+  function testChips(a) { return "<div class=\"chips\">" + a.map(function (t) { var w = /\(warn\)/.test(t); return "<code" + (w ? " class=\"w\"" : "") + ">" + esc(t.replace(" (warn)", "")) + (w ? " · warn" : "") + "</code>"; }).join("") + "</div>"; }
+  $("qtiles").innerHTML = [["tests in the project", "67", "49 silver, 13 marts, 5 dim_gameweeks"], ["last run", "2026-11-03", "all passed, not scheduled"], ["enforced contracts", "4", "since 2026-11-04"], ["freshness rule", "36h / 72h", "warn / error on _loaded_at"]]
+    .map(function (t) { return "<div class=\"tile\"><span>" + t[0] + "</span><b>" + t[1] + "</b><small>" + t[2] + "</small></div>"; }).join("");
+  $("contracts").innerHTML = "<div class=\"box\"><h3>What the contract fixes</h3><p>" + esc(P.contract.fixes) + "</p><div class=\"chips\" style=\"margin-top:14px\">" +
+    ["fct_player_gameweek", "dim_players", "dim_teams", "dim_gameweeks"].map(function (n) { return "<code>" + n + " · " + G[n].cols.length + "</code>"; }).join("") + "</div></div>" +
+    "<div class=\"box\"><h3>Breaking changes</h3><p>" + esc(P.contract.breaking) + "</p><p>Not covered: " + P.contract.notCovered.map(function (n) { return "<code>" + n + "</code>"; }).join(", ") + ".</p></div>";
+  var gt = P.quality.gold, gtRows = Object.keys(gt).map(function (k) { return "<tr><td class=\"m\">" + (k === "singular" ? "custom tests" : k) + "</td><td>" + testChips(gt[k]) + "</td></tr>"; }).join("");
+  $("goldtests").innerHTML = gtRows;
+  var st = P.quality.silver; $("silvertests").innerHTML = Object.keys(st).map(function (k) { return "<tr><td class=\"m\">" + (k === "singular" ? "custom tests" : k) + "</td><td>" + testChips(st[k]) + "</td></tr>"; }).join("");
+  $("fresh").innerHTML = "<div class=\"box\"><h3>Promise</h3><p>" + esc(P.freshness.expectation) + "</p><p>Intended design: " + esc(P.freshness.design) + ".</p></div>" +
+    "<div class=\"box\"><h3>Where it stands</h3><p>" + esc(P.freshness.current) + "</p><p>Freshness is measured on <code>_loaded_at</code>, which is when Bronze was loaded, not when the app data last changed. The frozen predictions table is exempt from the error.</p></div>";
+
+  /* metrics */
+  $("metrics").innerHTML = D.metrics.map(function (m) {
+    return "<article class=\"metric\"><div class=\"top2\"><span class=\"pill\">" + m.type + "</span><span class=\"pill solid\">" + m.verification + "</span></div><h3>" + esc(m.label) + "</h3><div class=\"v\" style=\"margin-top:8px\">" + Number(m.value).toLocaleString("en-GB", { maximumFractionDigits: 5 }) + "</div><p><code>" + m.name + "</code></p><p>" + esc(m.desc) + "</p></article>";
+  }).join("");
+  $("mscope").innerHTML = "<b>Scope.</b> Values are whole-season totals for 2026-27 as of 2026-11-04. Verified groupings: " + P.scope.verified_groupings.join(", ") + ". Not yet checked: " + P.scope.not_yet_checked_groupings.join(", ") + ".";
+  var mrows = [];
+  D.semantic.forEach(function (s) { (s.measureDetails || []).forEach(function (m) { mrows.push("<tr><td class=\"m\">" + m.name + "</td><td><span class=\"pill\">" + m.agg + "</span></td><td class=\"m\" style=\"white-space:normal;overflow-wrap:anywhere\">" + esc(m.expr) + "</td><td class=\"s\">" + esc(m.desc) + "</td></tr>"); }); });
+  $("measures").innerHTML = mrows.join("");
+  $("semantic").innerHTML = D.semantic.map(function (s) {
+    return "<article class=\"card\"><h3 class=\"mono\" style=\"font-size:16px;letter-spacing:0\">" + s.name + "</h3><p>" + esc(s.desc) + " Built on <code>" + s.model + "</code>.</p>" +
+      "<div class=\"chips\" style=\"margin-top:12px\">" + s.entities.map(function (x) { return "<code>" + x + "</code>"; }).join("") + "</div>" +
+      "<p style=\"margin-top:12px\"><b style=\"color:var(--ink)\">Dimensions</b> " + s.dimensions.join(", ") + (s.measures.length ? "<br><b style=\"color:var(--ink)\">Measures</b> " + s.measures.join(", ") : "") + "</p></article>";
+  }).join("");
+
+  /* catalog */
+  $("pdesc").textContent = P.description;
+  $("pname").textContent = P.name;
+  $("pmeta").innerHTML = "<span class=\"pill\">v" + P.version + "</span><span class=\"pill dim\">status: " + P.status + "</span><span class=\"pill dim\">owner: " + esc(P.owner) + "</span><span class=\"pill dim\">dataset: gold</span>";
+  $("pbody").innerHTML = "<p><b style=\"color:var(--ink)\">Grain.</b> " + esc(P.grain) + "</p><p>" + esc(P.grainNotes) + "</p>";
+  var pt = P.tables.map(function (t) { return { n: t.name, d: t.description, c: G[t.name].cols.length }; });
+  function renderTables() {
+    var term = $("q").value.trim().toLowerCase();
+    var shown = pt.filter(function (r) { return !term || (r.n + " " + r.d).toLowerCase().indexOf(term) !== -1; });
+    $("ptables").innerHTML = shown.map(function (r) { return "<tr><td class=\"m\"><a href=\"#data-model\" style=\"color:inherit\">" + r.n + "</a></td><td>" + r.c + "</td><td class=\"s\">" + esc(r.d) + "</td></tr>"; }).join("");
+    $("pempty").style.display = shown.length ? "none" : "block";
+  }
+  $("q").addEventListener("input", renderTables); renderTables();
+  $("pdims").innerHTML = P.dimensions.map(function (d) { return "<tr><td class=\"m\">" + d.name + "</td><td class=\"s\">" + esc(d.description) + "</td></tr>"; }).join("");
+  $("plimits").innerHTML = P.limits.map(function (l) { return "<li>" + esc(l) + "</li>"; }).join("");
+  $("paccess").innerHTML = "<div class=\"box\"><h3>Classification</h3><p>" + esc(P.access.class) + ". Personal data: " + esc(P.access.personal) + "</p></div><div class=\"box\"><h3>Excluded</h3><p>" + esc(P.access.excluded) + "</p></div>";
+  $("ploc").innerHTML = "Location: <code>" + esc(P.location) + "</code>";
+  $("pq").innerHTML = P.queries.map(function (q, i) {
+    return "<div class=\"sql\"><header><span>" + esc(q.name) + "</span><button type=\"button\" data-i=\"" + i + "\">Copy</button></header><pre id=\"sql" + i + "\">" + esc(q.sql) + "</pre></div>";
+  }).join("");
+  [].slice.call(document.querySelectorAll(".sql button")).forEach(function (b) {
+    b.addEventListener("click", function () {
+      var el = $("sql" + b.getAttribute("data-i")), txt = el.textContent;
+      function sel() { var r = document.createRange(); r.selectNodeContents(el); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); b.textContent = "Selected"; }
+      try { navigator.clipboard.writeText(txt).then(function () { b.textContent = "Copied"; setTimeout(function () { b.textContent = "Copy"; }, 1500); }, sel); } catch (e) { sel(); }
+    });
+  });
+
+  /* architecture diagram */
+  (function () {
+    var root = $("archsvg"), s = "", cy = 300;
+    function icon(type, x, y, c) {
+      var st = "class=\"a-i a-sol\" stroke=\"" + c + "\"", g = "<g transform=\"translate(" + x + " " + y + ")\">";
+      if (type === "db") g += "<path " + st + " d=\"M-26 -24 v48 a26 9 0 0 0 52 0 v-48\"/><ellipse " + st + " cx=\"0\" cy=\"-24\" rx=\"26\" ry=\"9\"/><path class=\"a-i\" stroke=\"" + c + "\" d=\"M-26 -6 a26 9 0 0 0 52 0 M-26 12 a26 9 0 0 0 52 0\"/>";
+      if (type === "folder") g += "<path " + st + " d=\"M-30 -18 h20 l7 9 h33 v34 h-60 z\"/><path class=\"a-i\" stroke=\"" + c + "\" d=\"M-14 6 h28\"/>";
+      if (type === "doc") g += "<path " + st + " d=\"M-18 -26 h24 l12 12 v40 h-36 z\"/><path class=\"a-i\" stroke=\"" + c + "\" d=\"M6 -26 v12 h12 M-10 0 h18 M-10 10 h14\"/>";
+      if (type === "gear") g += "<rect " + st + " x=\"-26\" y=\"-22\" width=\"52\" height=\"44\" rx=\"8\"/><path class=\"a-i\" stroke=\"" + c + "\" d=\"M-12 -4 h20 m-7 -7 l7 7 l-7 7 M-12 10 h12\"/>";
+      if (type === "sigma") g += "<rect " + st + " x=\"-26\" y=\"-26\" width=\"52\" height=\"52\" rx=\"12\"/><text x=\"0\" y=\"11\" text-anchor=\"middle\" style=\"font:600 32px var(--font-head);fill:" + c + "\">Σ</text>";
+      if (type === "site") g += "<rect " + st + " x=\"-24\" y=\"-20\" width=\"48\" height=\"40\" rx=\"6\"/><path class=\"a-i\" stroke=\"" + c + "\" d=\"M-24 -8 h48 M-16 3 h20 M-16 11 h28\"/>";
+      if (type === "cube") g += "<path " + st + " d=\"M0 -26 l24 12 v26 l-24 12 l-24 -12 v-26 z\"/><path class=\"a-i\" stroke=\"" + c + "\" d=\"M-24 -14 l24 12 l24 -12 M0 -2 v26\"/>";
+      if (type === "code") g += "<rect " + st + " x=\"-24\" y=\"-20\" width=\"48\" height=\"40\" rx=\"6\"/><path class=\"a-i\" stroke=\"" + c + "\" d=\"M-8 -8 l-8 8 l8 8 M8 -8 l8 8 l-8 8\"/>";
+      return g + "</g>";
+    }
+    function txt(x, y, cls, t) { return "<text class=\"" + cls + "\" x=\"" + x + "\" y=\"" + y + "\" text-anchor=\"middle\">" + t + "</text>"; }
+    function node(type, x, c, head, big, unit, sub) {
+      return icon(type, x, cy - 20, c) + txt(x, 150, "a-h", head) + txt(x, cy + 36, "a-b", big + (unit ? " <tspan class=\"a-s\" style=\"font:400 13px var(--font-mono)\">" + unit + "</tspan>" : "")) + txt(x, cy + 58, "a-s", sub[0]) + (sub[1] ? txt(x, cy + 74, "a-s", sub[1]) : "");
+    }
+    function arrow(x1, x2, dashed, y) { y = y || cy - 20; return "<path class=\"" + (dashed ? "a-plan" : "a-line") + "\" d=\"M" + x1 + " " + y + " H" + (x2 - 6) + "\"/><path class=\"a-line\" d=\"M" + (x2 - 10) + " " + (y - 4) + " L" + x2 + " " + y + " L" + (x2 - 10) + " " + (y + 4) + "\"/>"; }
+    function gate(x, n) { return "<g class=\"a-gate\"><circle cx=\"" + x + "\" cy=\"" + (cy - 20) + "\" r=\"13\"/><text x=\"" + x + "\" y=\"" + (cy - 15) + "\">" + n + "</text></g>"; }
+
+    /* bands */
+    s += "<rect class=\"a-band\" x=\"330\" y=\"28\" width=\"700\" height=\"70\" rx=\"12\"/><text class=\"a-h\" x=\"346\" y=\"50\">metadata · generated from the repo</text>";
+    [[360, "data product contract", "player_performance.yml"], [600, "dbt manifest + catalog", "columns, types, tests"], [830, "lineage links", "25 dependencies"]].forEach(function (m) {
+      s += "<text class=\"a-small\" x=\"" + m[0] + "\" y=\"72\">" + m[1] + "</text><text class=\"a-s\" x=\"" + m[0] + "\" y=\"88\">" + m[2] + "</text>"; });
+    s += "<rect class=\"a-band\" x=\"330\" y=\"506\" width=\"700\" height=\"70\" rx=\"12\"/><text class=\"a-h\" x=\"346\" y=\"528\">ops · every run</text>";
+    [[360, "batch manifest", "row counts per table"], [600, "dbt run results", "67 tests, 4 contracts"], [830, "status file (planned)", "last_run.json"]].forEach(function (m) {
+      s += "<text class=\"a-small\" x=\"" + m[0] + "\" y=\"550\">" + m[1] + "</text><text class=\"a-s\" x=\"" + m[0] + "\" y=\"566\">" + m[2] + "</text>"; });
+
+    /* gold lane */
+    s += "<rect class=\"a-lane\" x=\"765\" y=\"100\" width=\"310\" height=\"360\" rx=\"16\"/><text class=\"a-h\" x=\"781\" y=\"124\" style=\"fill:var(--ink)\">gold layer</text>";
+    s += "<text class=\"a-s\" x=\"781\" y=\"446\">tables + semantic layer, built by dbt</text>";
+
+    /* nodes */
+    s += node("db", 90, "var(--t2)", "sources", "1", "database", ["Postgres, on the VM", "10 tables"]);
+    s += node("gear", 235, "var(--t2)", "ingest", "1", "script", ["extractor.py", "daily, planned"]);
+    s += node("folder", 380, "var(--t4)", "lake", "10", "tables", ["Parquet files", "+ a manifest"]);
+    s += node("db", 525, "var(--t4)", "bronze", "10", "tables", ["faithful copy", "bronze_loader"]);
+    s += node("db", 670, "var(--t3)", "silver", "10", "views", ["cleaned, typed", "stg_* models"]);
+    s += node("db", 815, "var(--t1)", "tables", "7", "tables", ["dims, facts, form", "4 contracts"]);
+    s += node("sigma", 985, "var(--t1)", "semantic", "6", "metrics", ["4 models", "MetricFlow"]);
+
+    /* arrows + gates */
+    s += arrow(120, 200) + arrow(270, 345) + arrow(416, 490, false) + arrow(560, 635) + arrow(706, 780) + arrow(850, 940);
+    s += gate(453, 1) + gate(598, 2) + gate(742, 3);
+    s += "<text class=\"a-s\" x=\"453\" y=\"" + (cy - 52) + "\" text-anchor=\"middle\">row counts</text><text class=\"a-s\" x=\"598\" y=\"" + (cy - 52) + "\" text-anchor=\"middle\">freshness</text><text class=\"a-s\" x=\"742\" y=\"" + (cy - 52) + "\" text-anchor=\"middle\">dbt tests</text>";
+    s += "<text class=\"a-s\" x=\"153\" y=\"" + (cy - 52) + "\" text-anchor=\"middle\">read-only</text>";
+
+    /* consumers */
+    s += "<path class=\"a-line\" d=\"M1075 " + (cy - 20) + " H1105 M1105 200 V400 M1105 200 H1125 M1105 " + (cy - 20) + " H1125 M1105 400 H1125\"/>";
+    s += "<text class=\"a-h\" x=\"1125\" y=\"150\">consumers</text>";
+    [[200, "cube", "data product", "Player Performance"], [cy - 20, "code", "MetricFlow + SQL", "mf query, BigQuery"], [400, "site", "this site", "catalog and lineage"]].forEach(function (c) {
+      s += "<g transform=\"translate(1150 " + c[0] + ") scale(.62)\">" + icon(c[1], 0, 0, "var(--t1)") + "</g><text class=\"a-small\" x=\"1182\" y=\"" + (c[0] - 2) + "\">" + c[2] + "</text><text class=\"a-s\" x=\"1182\" y=\"" + (c[0] + 15) + "\">" + c[3] + "</text>";
+    });
+    /* band connectors */
+    s += "<path class=\"a-plan\" d=\"M525 98 V190 M670 98 V190 M815 98 V100\"/><path class=\"a-plan\" d=\"M525 506 V400 M670 506 V400 M815 506 V460\"/>";
+    s += "<text class=\"a-s\" x=\"22\" y=\"590\">dashed = planned or generated, solid = running today</text>";
+    root.innerHTML = s;
+
+    $("atiles").innerHTML = [["source tables", "10", "1 Postgres database"], ["models and tables", "27", "10 bronze, 10 silver, 7 gold"], ["gates", "3", "load, source, build"], ["tests per build", "67", "plus 4 contracts"], ["metrics", "6", "defined once, verified"]]
+      .map(function (t) { return "<div class=\"tile\"><span>" + t[0] + "</span><b>" + t[1] + "</b><small>" + t[2] + "</small></div>"; }).join("");
+  })();
+
+  /* metadata */
+  (function () {
+    var rows = [];
+    D.bronze.forEach(function (b) { rows.push({ n: b.name, l: "bronze", up: [], t: 0, c: false, d: b.desc }); });
+    D.silver.forEach(function (s) { rows.push({ n: s.name, l: "silver", up: s.deps, t: s.tests, c: false, d: s.desc }); });
+    D.gold.forEach(function (g) { rows.push({ n: g.name, l: "gold", up: g.deps, t: g.cols.reduce(function (a, c) { return a + c.tests.length; }, 0), c: g.contract, d: g.desc }); });
+    rows.forEach(function (r) { r.down = rows.filter(function (x) { return x.up.indexOf(r.n) !== -1; }).map(function (x) { return x.n; }); });
+    var pm = [["Name", P.name], ["Title", P.title], ["Version", "v" + P.version], ["Status", P.status], ["Owner", P.owner], ["Domain", P.domain],
+      ["Classification", P.access.class], ["Personal data", P.access.personal], ["Location", P.location], ["Freshness promise", P.freshness.expectation],
+      ["Contract", "enforced since " + P.contract.since], ["Grain", P.grain]];
+    $("pmd").innerHTML = pm.map(function (m) { return "<div><b>" + m[0] + "</b><span>" + esc(m[1]) + "</span></div>"; }).join("");
+    var layer = "all";
+    function chips(a) { return a.length ? "<div class=\"chips\">" + a.map(function (x) { return "<code>" + x + "</code>"; }).join("") + "</div>" : "<span style=\"color:var(--slate)\">none</span>"; }
+    function render() {
+      var term = $("mq").value.trim().toLowerCase();
+      var shown = rows.filter(function (r) { return (layer === "all" || r.l === layer) && (!term || (r.n + " " + r.d + " " + r.l).toLowerCase().indexOf(term) !== -1); });
+      $("mrows").innerHTML = shown.map(function (r) {
+        return "<tr><td class=\"m\">" + r.n + "</td><td><span class=\"pill\">" + r.l + "</span></td><td>" + (r.l === "bronze" ? chips(["lake: Parquet batch"]) : chips(r.up)) + "</td><td>" + (r.down.length ? r.down.length : "<span style=\"color:var(--slate)\">0</span>") + "</td><td>" + r.t + "</td><td>" + (r.c ? "<span class=\"pill solid\">enforced</span>" : "<span style=\"color:var(--slate)\">no</span>") + "</td><td class=\"s\">" + esc(r.d) + "</td></tr>";
+      }).join("");
+      $("mempty").style.display = shown.length ? "none" : "block";
+    }
+    $("mq").addEventListener("input", render);
+    [].slice.call(document.querySelectorAll("[data-l]")).forEach(function (b) { b.addEventListener("click", function () { layer = b.getAttribute("data-l"); [].slice.call(document.querySelectorAll("[data-l]")).forEach(function (x) { x.setAttribute("aria-pressed", x === b ? "true" : "false"); }); render(); }); });
+    render();
+  })();
+
+  show();
+})();
+</script>
+
+</body>
+</html>
